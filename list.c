@@ -5,15 +5,15 @@
 #include "list.h"
 #include "card.h"
 
-node *nodeNew(card value, node *n) {
-  node *q = (node *) malloc(sizeof(node));
-  q->task = value;
+node* nodeNew(card* c, node* n) {
+  node* q = (node*) malloc(sizeof(node));
+  q->task = c;
   q->next = n;
   return q;
 }
 
-list *listNew() {
-  list *l = (list *) malloc(sizeof(list));
+list* listNew() {
+  list* l = (list*) malloc(sizeof(list));
   if (l != NULL) {
     l->size = 0;
     l->first = NULL;
@@ -21,12 +21,12 @@ list *listNew() {
   return l;
 }
 
-int listIsEmpty(list *l) {
+int listIsEmpty(list* l) {
   return l->size == 0;
 }
 
-void listDestroy(list *l) {
-  node *tmp;
+void listDestroy(list* l) {
+  node* tmp;
   while (!listIsEmpty(l)) {
     tmp = l->first;
     l->first = l->first->next;
@@ -36,8 +36,8 @@ void listDestroy(list *l) {
   free(l);
 }
 
-void listAddFirst(card value, list *l) {
-  node *n = nodeNew(value, NULL);
+void listAddFirst(card* c, list *l) {
+  node *n = nodeNew(c, NULL);
   if (listIsEmpty(l)) {
     l->first = n;
     l->size++;
@@ -48,14 +48,14 @@ void listAddFirst(card value, list *l) {
   l->size++;
 }
 
-void listAddLast(card value, list *l) {
-  node *n = nodeNew(value, NULL);
+void listAddLast(card* c, list *l) {
+  node* n = nodeNew(c, NULL);
   if (listIsEmpty(l)) {
     l->first = n;
     l->size++;
     return;
   }
-  node *q = l->first;
+  node* q = l->first;
   while (q->next != NULL) {
     q = q->next;
   }
@@ -63,15 +63,13 @@ void listAddLast(card value, list *l) {
   l->size++;
 }
 
-card listGetFirst(list *l) {
-  // huh que metemos aqui caso seja empty?
-  //if (listIsEmpty(l)) { return INT_MIN / 2; }
+card* listGetFirst(list* l) {
+  if (listIsEmpty(l)) { return NULL; }
   return l->first->task;
 }
 
-card listGetLast(list *l) {
-  // caso seja empty?
-  //if (listIsEmpty(l)) { return INT_MIN / 2; }
+card* listGetLast(list *l) {
+  if (listIsEmpty(l)) { return NULL; }
   node *n = l->first;
   while (n->next != NULL) {
     n = n->next;
@@ -102,42 +100,42 @@ void listRemoveLast(list *l) {
     l->size--;
     return;
   }
-  node *n = l->first;
+  node* n = l->first;
   while (n->next->next != NULL) {
     n = n->next;
   }
-  node *q = n->next;
+  node* q = n->next;
   n->next = NULL;
   free(q);
   l->size--;
 }
 
-int listContains(card value, list *l) {
+int listContains(card* c, list *l) {
   node *n = l->first;
   while (n->next != NULL) {
-    if (n->task.id == value.id) {
+    if (n->task->id == c->id) {
       return 1;
     }
     n = n->next;
   }
-  if (n->task.id == value.id) {
+  if (n->task->id == c->id) {
     return 1;
   }
   return 0;
 }
 
-int listIdAtIndex(int index, list *l) {
+card* listTaskAtIndex(int index, list *l) {
   if (index < 0 || index >= l->size) {
-    return INT_MIN / 2;
+    return NULL;
   }
-  node *n = l->first;
+  node* n = l->first;
   for (int i = 0; i < index; i++) {
     n = n->next;
   }
-  return n->task.id;
+  return n->task;
 }
 
-void listRemoveAtIndex(int index, list *l) {
+void listRemoveAtIndex(int index, list* l) {
   if (index < 0 || index >= l->size) {
     return;
   }
@@ -159,19 +157,17 @@ void listRemoveAtIndex(int index, list *l) {
   l->size--;
 }
 
-void listAddAtIndex(int index, card value, list *l) {
-  if (index < 0) {
-    return;
-  }
+void listAddAtIndex(int index, card* c, list* l) {
+  if (index < 0) { return; }
   if (index == 0) {
-    listAddFirst(value, l);
+    listAddFirst(c, l);
     return;
   }
   if (index > l->size) {
-    listAddLast(value, l);
+    listAddLast(c, l);
     return;
   }
-  node *newNode = nodeNew(value, NULL);
+  node *newNode = nodeNew(c, NULL);
   node *n = l->first;
   for (int i = 0; i < index - 1; i++) {
     n = n->next;
@@ -181,7 +177,7 @@ void listAddAtIndex(int index, card value, list *l) {
   l->size++;
 }
 
-void listChangeAtIndex(int index, card value, list *l) {
+void listChangeAtIndex(int index, card* c, list *l) {
   if (index < 0 || index >= l->size) {
     return;
   }
@@ -189,25 +185,40 @@ void listChangeAtIndex(int index, card value, list *l) {
   for (int i = 0; i < index; i++) {
     n = n->next;
   }
-  n->task = value;
+  n->task = c;
 }
 
 int listSize(list *l) {
   return l->size;
 }
 
+list* loadToDo(){
+	list* ret = listNew();
+	return ret;
+}
+
+list* loadDoing(){
+	list* ret = listNew();
+	return ret;
+}
+
+list* loadDone(){
+	list* ret = listNew();
+	return ret;
+}
+
 // needs work
 void listPrint(list *l) {
   if (listIsEmpty(l)) {
-    puts("{}");
+    puts("Lista vazia meu puto");
     return;
   }
   printf("{ ");
-  node *n = l->first;
-  printf("Task:\n\tDescription: %s\n\tPerson assigned: %s", n->task.description, n->task.person);
+  node* n = l->first;
+  printf("Task:\n\tDescription: %s\n\tPerson assigned: %s", n->task->description, n->task->person);
   while (n->next != NULL) {
     n = n->next;
-    printf("\nTask:\n\tDescription: %s\n\tPerson assigned: %s", n->task.description, n->task.person);
+    printf("\nTask:\n\tDescription: %s\n\tPerson assigned: %s", n->task->description, n->task->person);
   }
   printf(" }\n");
 }
