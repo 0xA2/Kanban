@@ -1,17 +1,23 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "card.h"
 
-void fillCard (Card *c, char *p, char *desc/*, Date st, Date end, int pr*/)
-{
-  c->person = p;
-  c->description = desc;
-  /*c->creationDate = st;
-  c->finalDate = end;
-  c->priority = pr;*/
+card *cardNew(int id, int priority, char *desc) {
+  card *l = (card *) malloc(sizeof(card));
+  if (l != NULL) {
+    l->id = id;
+    l->priority = priority;
+    l->description = desc;
+    l->person = NULL; // not assigned yet
+  }
+  return l;
 }
 
-void printCard (Card *c)
-{
-  puts (c->person);
-  puts (c->description);
+void cardAssign(card *c, char *p) {
+  c->person = p;
+}
+
+void cardPrint(card *c) {
+  puts(c->person);
+  puts(c->description);
 }

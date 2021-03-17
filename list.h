@@ -1,31 +1,32 @@
-// New type for list of integers
+#include "card.h"
+#ifndef _LIST_H_
 
 typedef struct lnode {
-	int val;
-	struct lnode* next;
+  card task;
+  struct lnode *next;
 } node;
 
 typedef struct {
-	int size;
-	node* first;
+  int size;
+  node *first;
 } list;
 
-// List API
+node *nodeNew(card, node *);
+list *listNew();
+int listIsEmpty(list *);
+void listDestroy(list *);
+void listAddFirst(card, list *);
+void listAddLast(card, list *);
+card listGetFirst(list *);
+card listGetLast(list *);
+void listRemoveFirst(list *);
+void listRemoveLast(list *);
+int listValueAtIndex(int, list *);
+void listRemoveAtIndex(int, list *);
+void listAddAtIndex(int, card, list *);
+void listChangeAtIndex(int, card, list *);
+int listSize(list *);
+int listContains(card, list *);
+void listPrint(list *);
 
-node* nodeNew(int, node*);
-list* listNew();
-int listIsEmpty(list*);
-void listDestroy(list*);
-void listAddFirst(int, list*);
-void listAddLast(int, list*);
-int listGetFirst(list*);
-int listGetLast(list*);
-void listRemoveFirst(list*);
-void listRemoveLast(list*);
-int listValueAtIndex(int, list*);
-void listRemoveAtIndex(int, list*);
-void listAddAtIndex(int,int,list*);
-void listChangeAtIndex(int,int,list*);
-int listSize(list*);
-int listContains(int,list*);
-void listPrint(list*);
+#endif //_LIST_H_
