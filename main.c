@@ -57,6 +57,53 @@ void printMenu(char *title, char *options[], int count, int ident) {
   }
 }
 
+void printLine(char *string) {
+  unsigned int sizeLimit = 20;
+  unsigned int size = strlen(string);
+  unsigned int cur = 0;
+
+  printf("* ");
+  // deve haver mais loops para o Doing e Done
+  // ambos devem ser +- equivalentes a este
+  for (cur = 1; cur <= size; ++cur) {
+    printf("%c", string[cur - 1]);
+    if (cur % sizeLimit == 0) {
+      printf(" *\n");
+      printf("* ");
+    }
+  }
+
+  if (cur > size) {
+    for (int i = 0; i <= sizeLimit - (cur % sizeLimit) + 1; ++i) {
+      printf(" ");
+    }
+    printf("*");
+  }
+
+  printf("\n");
+}
+
+void printLimit(int sizeLimit, char d) {
+  for (int i = 0; i < (sizeLimit * 3 + 10); ++i) {
+    printf("%c", d);
+  }
+  printf("\n");
+}
+
+void printBoard(list *todo, list *doing, list *done) {
+  printLimit(20, '*');
+  printLine("TODO");
+  printLimit(20, '*');
+
+  for (int i = 0; i < 5; ++i) {
+    // esta funçao vai receber 3 strings
+    printLine("cenas bro, coisas acontecem");
+    printLimit(20, '*');
+  }
+
+  printLimit(20, '*');
+}
+
 int main() {
   // lists used
   list *todo = listNew();
@@ -73,6 +120,7 @@ int main() {
       {"Add Task", "Move to 'Doing'", "Change person", "Close task", "Reopen task", "View tasks by person",
        "View tasks by date", "Exit"};
 
+  printBoard(todo, doing, done);
   printMenu(title, options, 8, 8);
 
   while (1) {
@@ -81,6 +129,7 @@ int main() {
     printf("> ");
     int op = 0;
     readOption(&op);
+
     switch (op) {
     case 1:
       // add task
