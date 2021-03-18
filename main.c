@@ -1,172 +1,309 @@
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
+#include <time.h>
 
 #include "card.h"
-#include "list.h"
+#include "tasklist.h"
 
-int readOption(int *op) {
-  long toInt;
-  char buffer[1024];
+#define MAX_TASKS 10
 
-  // Exit if something goes wrong reading input
-  if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-    printf("\n");
-    exit(1);
-  }
-
-  // Convert string input into long
-  char *ptr;
-  errno = 0;
-  toInt = strtol(buffer, &ptr, 10);
+#define MAX_READ 1024 // Max number of characters that can be read into a single buffer
 
 
-  // Check errors
+// --- Read Functions --- //
 
-  if (errno == ERANGE) {
-    return 0;
-  }
+int readInt(int* op){
 
-  if (ptr == buffer) {
-    return 0;
-  }
+	// Function to read user input and use it as an integer
+	// Non digit characters will be ignored
 
-  if (*ptr && *ptr != '\n') {
-    return 0;
-  }
+	long toInt;
+	char buffer[MAX_READ];
 
-  if (toInt > INT_MAX || toInt < INT_MIN) {
-    return 0;
-  }
+	if(fgets(buffer, MAX_READ, stdin) != NULL){
+		size_t len = strlen(buffer);
 
-  *op = (int) toInt;
-  return 1;
+		// Clear stdin if more than MAX_READ characters are read
+		if(len > 0 && buffer[len-1] != '\n'){
+			int clear;
+			while((clear = getchar()) != '\n' && clear != EOF);
+		}
+	}
+	else{ printf("\n"); exit(1);}
+
+	// Convert string input into long and ignore not digit characters
+	char* end; errno = 0;
+	toInt = strtol(buffer, &end, 10);
+
+
+	// Check errors
+
+	if(errno == ERANGE){ return 0; }
+
+	if(end == buffer){ return 0; }
+
+	if(*end && *end != '\n'){ return 0; }
+
+	if(toInt > INT_MAX || toInt < INT_MIN){ return 0; }
+
+	*op = (int)toInt;
+	return 1;
 }
 
-void printMenu(char *title, char *options[], int count, int ident) {
-  // system("clear");
-  for (int i = 0; i < strlen(title) + ident; i++) {
-    printf("-");
-  }
-  printf("\n");
-  for (int i = 0; i < count; i++) {
-    printf("%d) ", i + 1);
-    puts(options[i]);
-  }
+void readString(char* buffer){
+
+	// Function to read user input and use it as a string
+
+	if(fgets(buffer,MAX_READ,stdin) != NULL){
+		size_t len = strlen(buffer);
+
+		// Clear stdin if more than MAX_READ characters are read
+		if(len > 0 && buffer[len-1] != '\n'){
+			int clear;
+			while((clear = getchar()) != '\n' && clear != EOF);
+		}
+		buffer[strcspn(buffer, "\n")] = 0;
+		buffer[strcspn(buffer, "|")] = 0;
+		return;
+	}
+
+	// Exit if something goes wrong while reading input
+	exit(1);
 }
 
-void printLine(char *string) {
-  unsigned int sizeLimit = 20;
-  unsigned int size = strlen(string);
-  unsigned int cur = 0;
 
-  printf("* ");
-  // deve haver mais loops para o Doing e Done
-  // ambos devem ser +- equivalentes a este
-  for (cur = 1; cur <= size; ++cur) {
-    printf("%c", string[cur - 1]);
-    if (cur % sizeLimit == 0) {
-      printf(" *\n");
-      printf("* ");
-    }
-  }
 
-  if (cur > size) {
-    for (int i = 0; i <= sizeLimit - (cur % sizeLimit) + 1; ++i) {
-      printf(" ");
-    }
-    printf("*");
-  }
+// --- Print Functions --- //
 
-  printf("\n");
+void printBoardRafado(tasklist* todo, tasklist* doing, tasklist* done){
+
+	// Function for keeping the board on screen
+
+	listPrintToDo(todo);
+	listPrintDoing(doing);
+	listPrintDone(done);
 }
 
-void printLimit(int sizeLimit, char d) {
-  for (int i = 0; i < (sizeLimit * 3 + 10); ++i) {
-    printf("%c", d);
-  }
-  printf("\n");
+void printMenu(char* title, char* options[], int count, int ident){
+
+	// Function for printing main menu
+
+	for(int i = 0; i<strlen(title)+ident; i++){ printf("-");}printf("\n");
+	for(int i = 0; i<ident/2;i++){printf(" ");} printf("%s\n", title);
+	for(int i = 0; i<strlen(title)+ident; i++){ printf("-");}printf("\n");
+	for(int i = 0; i<count; i++){
+		printf("%d) ", i+1);
+		puts(options[i]);
+	}
 }
 
-void printBoard(list *todo, list *doing, list *done) {
-  printLimit(20, '*');
-  printLine("TODO");
-  printLimit(20, '*');
 
-  for (int i = 0; i < 5; ++i) {
-    // esta funçao vai receber 3 strings
-    printLine("cenas bro, coisas acontecem");
-    printLimit(20, '*');
-  }
+// --- Functions for core operations --- //
 
-  printLimit(20, '*');
+
+int getCurID(tasklist* todo, tasklist* doing, tasklist* done){
+	return listSize(todo)+listSize(doing)+listSize(done)+1;
 }
 
-int main() {
-  // lists used
-  list *todo = listNew();
-  list *doing = listNew();
-  list *done = listNew();
 
-  card *c = cardNew(1, 2, "lmao dude");
-  cardAssign(c, "pedro");
-  listAddFirst(*c, todo);
+void addTask(tasklist* todo, tasklist* doing, tasklist* done){
 
-  // CLI stuff
-  char title[] = "KanBan";
-  char *options[] =
-      {"Add Task", "Move to 'Doing'", "Change person", "Close task", "Reopen task", "View tasks by person",
-       "View tasks by date", "Exit"};
+	// Ask user for task priority
+	printf("Task Priority[1-10] > ");
+	int pri; readInt(&pri);
 
-  printBoard(todo, doing, done);
-  printMenu(title, options, 8, 8);
+	// Ask user for task description
+	printf("Task Description > ");
+	char* desc = (char*)malloc(MAX_READ); readString(desc);
 
-  while (1) {
-    // Manter o quadro sempre no do ecra
-    //printBoard();
-    printf("> ");
-    int op = 0;
-    readOption(&op);
+	card* toAdd;
+	int id = getCurID(todo,doing,done);
+	if((toAdd = cardNew(id,pri,time(NULL),desc)) != NULL ){
+		listAddByPriority(toAdd,todo);
+	}
+	return;
+}
 
-    switch (op) {
-    case 1:
-      // add task
-      listPrint(todo);
-      break;
+void workOnTask(tasklist* todo, tasklist* doing){
 
-    case 2:
-      // move to doing
-      break;
+	// Check if MAX_TASKS has been reached
+	if(doing -> size >= MAX_TASKS){
+		puts("\n----------------------------");
+		puts("You can't work on more tasks");
+		puts("----------------------------\n");
+		return;
+	}
 
-    case 3:
-      // change person
-      break;
+	// Ask user for task id
+	printf("Task id > ");
+	int id; readInt(&id);
 
-    case 4:
-      // close task
-      break;
+	// Chech if task exists in todo
+	if(!listTaskExists(id,todo)){
+		puts("\n--------------------------");
+		puts("No task found for given id");
+		puts("--------------------------\n");
+		return;
+	}
 
-    case 5:
-      // reopen
-      break;
+	card* toMove;
 
-    case 6:
-      // view tasks by person
-      break;
+	// Remove task from todo
+	if( (toMove = listRemoveTaskByID(id,todo)) != NULL){
 
-    case 7:
-      // View tasks by date
-      break;
+		// Ask user who to assign the task to
+		printf("Assign task to > ");
+		char* worker = (char*)malloc(MAX_READ); readString(worker);
+		cardAssign(toMove, worker);
 
-    case 8: exit(0);
-      break;
+		// Add task to doing
+		listAddByPriority(toMove,doing);
+	}
 
-    default: puts("Invalid Option");
-    }
+}
 
-  }
-  return 0;
+
+void reAssignTask(tasklist* doing){
+
+	// Ask user for task id
+	printf("Task id > ");
+	int id; readInt(&id);
+
+	// Chech if task exists in todo
+	if(!listTaskExists(id,doing)){
+		puts("\n--------------------------");
+		puts("No task found for given id");
+		puts("--------------------------\n");
+		return;
+	}
+
+	card* toChange;
+	if( (toChange = listGetTaskByID(id,doing)) != NULL){
+
+		// Ask user who to assign the task to
+		printf("Assign task to > ");
+		char* worker = (char*)malloc(MAX_READ); readString(worker);
+		cardAssign(toChange, worker);
+	}
+}
+
+
+void closeTask(tasklist* doing, tasklist* done){
+
+	// Ask user for task id
+	printf("Task id > ");
+	int id; readInt(&id);
+
+	// Chech if task exists in todo
+	if(!listTaskExists(id,doing)){
+		puts("\n--------------------------");
+		puts("No task found for given id");
+		puts("--------------------------\n");
+		return;
+	}
+
+	card* toMove;
+
+	// Remove task from doing
+	if( (toMove = listRemoveTaskByID(id,doing)) != NULL){
+
+		// Set time of conclusion
+		cardSetDateConcluded(toMove,time(NULL));
+
+		// Add task to doing
+		listAddByPriority(toMove,done);
+	}
+
+}
+
+
+void reopenTask(tasklist* todo, tasklist* done){
+
+	// Ask user for task id
+	printf("Task id > ");
+	int id; readInt(&id);
+
+	// Chech if task exists in done
+	if(!listGetTaskByID(id,done)){
+		puts("\n--------------------------");
+		puts("No task found for given id");
+		puts("--------------------------\n");
+		return;
+	}
+
+	card* toMove;
+
+	// Remove task from doing
+	if( (toMove = listRemoveTaskByID(id,done)) != NULL){
+		// Reset task
+		cardSetDateDue(toMove,0);
+		cardSetDateConcluded(toMove,0);
+		toMove -> person = NULL;
+
+		// Add task to done
+		listAddByPriority(toMove,todo);
+	}
+
+}
+
+
+int main(){
+
+	//tasklist* all;
+	tasklist* todo = loadToDo();
+	tasklist* doing = loadDoing();
+	tasklist* done = loadDone();
+
+	char title[] = "Kanban";
+	char* options[] = {"Add Task", "Work on Task", "Assign task", "Close task", "Reopen task", "View tasks by worker", "View tasks by date", "Exit"};
+
+	while(1){
+		printBoardRafado(todo,doing,done);
+		printMenu(title, options, 8, 8);
+		printf("> ");
+		int op = 0; readInt(&op);
+		switch(op){
+			case 1:
+				addTask(todo,doing,done);
+				break;
+
+			case 2:
+				workOnTask(todo,doing);
+				break;
+
+			case 3:
+				reAssignTask(doing);
+				break;
+
+			case 4:
+				closeTask(doing,done);
+				break;
+
+			case 5:
+				reopenTask(todo,done);
+				break;
+
+			case 6:
+				//tasksFromWorker(doing,done);
+				break;
+
+			case 7:
+				//tasksByDate(all);
+				break;
+
+			case 8:
+				exit(0);
+				break;
+
+			default:
+				puts("Invalid Option");
+		}
+
+	}
+	return 0;
 }
 
