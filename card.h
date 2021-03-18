@@ -1,22 +1,20 @@
-#ifndef _CARD_H_
-/*
-typedef struct {
-  int day, month, year;
-} date;
-*/
+#ifndef CARD_H
+#define CARD_H
 
 typedef struct {
-  // date with time???
-  int id;
-  int priority;
-  char *description;
-  char *person;
+	int id;
+	int priority;
+	long dateCreated;
+	long dateDue;
+	long dateConclusion;
+	char *description;
+	char *person;
 } card;
 
-card *cardNew(int, int, char *);
-void cardAssign(card *, char *);
-void cardPrint(card *c);
-
-#define _CARD_H_
-
-#endif //_CARD_H_
+card* cardNew(int, int, long, char*);
+void cardAssign(card*, char *);
+char* cardGetAssign(card*);
+void cardSetDateCreated(card*, long);
+void cardSetDateDue(card*, long);
+void cardSetDateConcluded(card*, long);
+#endif
