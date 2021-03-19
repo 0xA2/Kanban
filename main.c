@@ -91,49 +91,58 @@ void readString(char *buffer) {
 
 
 // --- Print Functions --- //
+void formatLine(char *str[], unsigned int sizeLimit) {
+  char *strTooLong[3];
+  char fmtStr[(3 * sizeLimit) + 10];
+  strcpy(fmtStr, "* ");
 
-void printLine(char *str[], char limit) {
-  unsigned int sizeLimit = 20;
-  printf("%c ", limit);
-
-  for (int k = 0; k < 3; ++k) {
-    if (str[k] == NULL) {
-      continue;
-    } else {
-      unsigned int size = strlen(str[k]);
-      unsigned int cur;
-
-      // deve haver mais loops para o Doing e Done
-      // ambos devem ser +- equivalentes a este
-      for (cur = 1; cur <= size; ++cur) {
-        printf("%c", str[k][cur - 1]);
-        if (cur % sizeLimit == 0) {
-          printf(" %c\n", limit);
-          printf("%c ", limit);
-        }
+  for (int i = 0; i < 3; ++i) {
+    // Append a string of spaces if string is null
+    if (str[i] == NULL) {
+      char nullStr[sizeLimit];
+      strcpy(nullStr, " ");
+      for (int j = 0; j < sizeLimit - 1; ++j) {
+        strcat(nullStr, " ");
       }
+      strcat(fmtStr, nullStr);
+    } else {
+      unsigned int curSize = strlen(str[i]) / sizeof(char *);
+      // if string is bigger than the limit then cut it, next line will have the rest
+      if (curSize > sizeLimit - 2) {
+        strncat(fmtStr, str[i], sizeLimit - 3);
+        strncpy(strTooLong[i], &str[i][sizeLimit], curSize - sizeLimit - 2);
+      } else {
 
-      if (cur > size) {
-        for (int i = 0; i <= sizeLimit - (cur % sizeLimit) + 1; ++i) {
-          printf(" ");
+        // Append the string itself and delimiter
+        strcat(fmtStr, str[i]);
+
+        // If too small, ident until delimiter
+        if (curSize < sizeLimit - 2) {
+          for (int j = 0; j < sizeLimit - curSize - 4; ++j) {
+            strcat(fmtStr, " ");
+          }
+          strcat(fmtStr, "* ");
         }
-        printf("%c ", limit);
       }
     }
-
   }
 
-  printf("\n");
+  puts(fmtStr);
 }
 
-void printLimit(int sizeLimit, char d) {
-  for (int i = 0; i < (sizeLimit * 3 + 10); ++i) {
+void printLimit(char d, unsigned int sizeLimit) {
+  for (int i = 0; i < (sizeLimit * 3) + 10; ++i) {
     printf("%c", d);
   }
   printf("\n");
 }
 
+void printLine(char *str[], unsigned int sizeLimit) {
+  formatLine(str, sizeLimit);
+}
+
 void printBoard(tasklist *todo, tasklist *doing, tasklist *done) {
+  unsigned int sizeLimit = 20 - 2;
   // Strings to print at each line
   char *firstStr[3];
 
@@ -143,20 +152,19 @@ void printBoard(tasklist *todo, tasklist *doing, tasklist *done) {
   firstStr[2] = "DONE";
 
   // Print titles
-  printLimit(20, '*');
-  printLine(firstStr, '*');
-  printLimit(20, '*');
+  printLimit('*', sizeLimit);
+  printLine(firstStr, sizeLimit);
+  printLimit('*', sizeLimit);
 
   // Get maximum size of given columns
   int maxSize = MAX2(MAX2(todo->size, doing->size), done->size);
-
   for (int i = 1; i <= maxSize; ++i) {
     char *curStr[3];
     curStr[0] = listPrintToDo(todo, i);
     curStr[1] = listPrintDoing(doing, i);
     curStr[2] = listPrintDone(done, i);
-    printLine(curStr, '|');
-    printLimit(20, '-');
+    printLine(curStr, sizeLimit);
+    printLimit('*', sizeLimit);
   }
 }
 
