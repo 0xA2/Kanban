@@ -92,11 +92,12 @@ void readString(char *buffer) {
 
 // --- Print Functions --- //
 void formatLine(char *str[], unsigned int sizeLimit) {
-  char *strTooLong[3];
-  char fmtStr[(3 * sizeLimit) + 10];
-  strcpy(fmtStr, "* ");
+  char strTooLong[3][sizeLimit + 2];
+  char fmtStr[(3 * sizeLimit) + 7];
+  strcpy(fmtStr, "");
 
   for (int i = 0; i < 3; ++i) {
+    strcat(fmtStr, "* ");
     // Append a string of spaces if string is null
     if (str[i] == NULL) {
       char nullStr[sizeLimit];
@@ -106,22 +107,22 @@ void formatLine(char *str[], unsigned int sizeLimit) {
       }
       strcat(fmtStr, nullStr);
     } else {
-      unsigned int curSize = strlen(str[i]) / sizeof(char *);
+
+      unsigned int curSize = strlen(str[i]);
       // if string is bigger than the limit then cut it, next line will have the rest
       if (curSize > sizeLimit - 2) {
-        strncat(fmtStr, str[i], sizeLimit - 3);
-        strncpy(strTooLong[i], &str[i][sizeLimit], curSize - sizeLimit - 2);
+        strncat(fmtStr, str[i], sizeLimit - 1);
+        strcat(fmtStr, " ");
+        strncpy(strTooLong[i], &str[i][sizeLimit - 1], curSize - sizeLimit);
       } else {
-
         // Append the string itself and delimiter
         strcat(fmtStr, str[i]);
 
         // If too small, ident until delimiter
         if (curSize < sizeLimit - 2) {
-          for (int j = 0; j < sizeLimit - curSize - 4; ++j) {
+          for (int j = 0; j < sizeLimit - curSize; ++j) {
             strcat(fmtStr, " ");
           }
-          strcat(fmtStr, "* ");
         }
       }
     }
@@ -131,7 +132,7 @@ void formatLine(char *str[], unsigned int sizeLimit) {
 }
 
 void printLimit(char d, unsigned int sizeLimit) {
-  for (int i = 0; i < (sizeLimit * 3) + 10; ++i) {
+  for (int i = 0; i < (sizeLimit * 3) + 7; ++i) {
     printf("%c", d);
   }
   printf("\n");
