@@ -9,5 +9,5 @@ add_executable(Kanban_board
         card.c
         card.h
         main.c
-        list.c
-        list.h)
+        tasklist.c
+        tasklist.h)

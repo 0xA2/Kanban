@@ -285,44 +285,59 @@ tasklist* loadAll(){
 	return ret;
 }
 
-void listPrintToDo(tasklist *l) {
-  if (listIsEmpty(l)) {
-    return;
+char *listPrintToDo(tasklist *l, int i) {
+  if (listIsEmpty(l) || i > l->size) {
+    return NULL;
   }
-  node* n = l->first;
-  puts("To Do:");
-  printf("\tID: %d\n\tPriority %d: %s", n->task->id,n->task->priority ,n->task->description);
-  while (n->next != NULL) {
-    n = n->next;
-    printf("\n\tID: %d\n\tPriority %d: %s", n->task->id, n->task->priority ,n->task->description);
+
+  char *str = malloc(128);
+  node *n = l->first;
+
+  for (int j = 0; j < i; ++j) {
+    if (j == i - 1) {
+      snprintf(str, 128, "%s (Priority: %d) (ID: %d)", n->task->description, n->task->priority, n->task->id);
+      return str;
+    } else {
+      n = n->next;
+    }
   }
-  printf("\n");
+  return NULL;
 }
 
-void listPrintDoing(tasklist *l) {
-  if (listIsEmpty(l)) {
-    return;
+char *listPrintDoing(tasklist *l, int i) {
+  if (listIsEmpty(l) || i > l->size) {
+    return NULL;
   }
-  node* n = l->first;
-  puts("Working on:");
-  printf("\n\tPriority %d: %s\n\tAssigned to: %s", n->task->priority ,n->task->description, n->task->person);
-  while (n->next != NULL) {
-    n = n->next;
-    printf("\n\n\tPriority %d: %s\n\tAssigned to: %s", n->task->priority ,n->task->description, n->task->person);
+
+  char *str = malloc(128);
+  node *n = l->first;
+
+  for (int j = 0; j < i; ++j) {
+    if (j == i - 1) {
+      snprintf(str, 128, "%s (Priority: %d) (ID: %d)", n->task->description, n->task->priority, n->task->id);
+      return str;
+    } else {
+      n = n->next;
+    }
   }
-  printf("\n");
+  return NULL;
 }
 
-void listPrintDone(tasklist *l) {
-  if (listIsEmpty(l)) {
-    return;
+char *listPrintDone(tasklist *l, int i) {
+  if (listIsEmpty(l) || i > l->size) {
+    return NULL;
   }
-  node* n = l->first;
-  puts("Tasks done");
-  printf("\n\t%s\n\tCompleted by : %s", n->task->description, n->task->person);
-  while (n->next != NULL) {
-    n = n->next;
-    printf("\n\n\t%s\n\tCompleted by: %s", n->task->description, n->task->person);
+
+  char *str = malloc(128);
+  node *n = l->first;
+
+  for (int j = 0; j < i; ++j) {
+    if (j == i - 1) {
+      snprintf(str, 128, "%s (Priority: %d) (ID: %d)", n->task->description, n->task->priority, n->task->id);
+      return str;
+    } else {
+      n = n->next;
+    }
   }
-  printf("\n");
+  return NULL;
 }
