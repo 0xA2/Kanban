@@ -5,8 +5,8 @@ typedef struct {
 	int id;
 	int priority;
 	long dateCreated;
-	long dateDue;
-	long dateConclusion;
+	long deadline;
+	long dateConcluded;
 	char *description;
 	char *person;
 } card;
@@ -14,7 +14,6 @@ typedef struct {
 card* cardNew(int, int, long, char*);
 void cardAssign(card*, char *);
 char* cardGetAssign(card*);
-void cardSetDateCreated(card*, long);
-void cardSetDateDue(card*, long);
+void cardSetDeadline(card*, long);
 void cardSetDateConcluded(card*, long);
 #endif
