@@ -1,9 +1,11 @@
 #include <ncurses.h>
 
+#include "tasklist.h"
+
 #ifndef KANBAN_BOARD__RENDER_H
 
 void print_menu(WINDOW *, int);
-void render();
+void render(tasklist *todo, tasklist *doing, tasklist *done);
 
 #define KANBAN_BOARD__RENDER_H
 

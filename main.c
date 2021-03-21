@@ -13,7 +13,7 @@ int main() {
   tasklist *doing = loadDoing();
   tasklist *done = loadDone();
 
-  render();
+  render(todo, doing, done);
   /*
   char title[] = "Kanban";
   char *options[] = {"Add Task", "Work on Task", "Assign task", "Close task", "Reopen task", "View tasks by worker",
