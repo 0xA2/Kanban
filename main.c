@@ -108,7 +108,9 @@ void printMenu(char* title, char* options[], int count, int ident){
 
 
 int getCurID(tasklist* todo, tasklist* doing, tasklist* done){
-	return listSize(todo)+listSize(doing)+listSize(done)+1;
+	int lastID = listSize(todo)+listSize(doing)+listSize(done);
+	if(lastID == INT_MAX - 1){ puts("Error: Maximum number of tasks reached"); exit(1);}
+	return lastID+1;
 }
 
 
