@@ -42,48 +42,55 @@ void restartMenu() {
   choices[5] = "Exit";
 }
 
-void print_menu(WINDOW *menu_win, int highlight) {
+void print_menu (WINDOW *menuWin, int highlight)
+{
   int x, y, i, pad;
 
   // Initial values, initial "padding"
   x = 2;
   y = 1;
 
-  box(menu_win, 0, 0);
+  box(menuWin, 0, 0);
 
   // Get padding
   int effectiveSize = 0;
 
-  for (int j = 0; j < n_choices; ++j) {
-    effectiveSize += strSize(choices[j]);
-  }
-  pad = (getmaxx(menu_win) - effectiveSize) / (n_choices - 1);
+  for (int j = 0; j < n_choices; ++j)
+    {
+      effectiveSize += strSize (choices[j]);
+    }
+  pad = (getmaxx(menuWin) - effectiveSize) / (n_choices - 1);
 
   // Print stuff
   for (i = 0; i < n_choices; ++i) {
     // Highlight the current choice
-    if (highlight == i + 1) {
-      wattron(menu_win, A_REVERSE);
-      mvwprintw(menu_win, y, x, "%s", choices[i]);
-      wattroff(menu_win, A_REVERSE);
-    } else
-      mvwprintw(menu_win, y, x, "%s", choices[i]);
+    if (highlight == i + 1)
+      {
+        wattron(menuWin, A_REVERSE);
+        mvwprintw (menuWin, y, x, "%s", choices[i]);
+        wattroff(menuWin, A_REVERSE);
+      } else
+      mvwprintw (menuWin, y, x, "%s", choices[i]);
     x += pad + strSize(choices[i]);
   }
 
-  wrefresh(menu_win);
+  wrefresh (menuWin);
 }
 
-void getNextMenu(int choice) {
-  switch (choice) {
-  case 1:addTask(todo, doing, done);
-    break;
+void getNextMenu (WINDOW *menuWin, int choice)
+{
+  initCore (menuWin);
 
-  case 2:workOnTask(todo, doing);
-    break;
+  switch (choice)
+    {
+  case 1:addTask (todo, doing, done);
+      break;
 
-  case 3:closeTask(doing, done);
-    break;
+  case 2:workOnTask (todo, doing);
+      break;
+
+  case 3:closeTask (doing, done);
+      break;
 
   case 4:reAssignTask(doing);
     break;
@@ -91,12 +98,12 @@ void getNextMenu(int choice) {
   case 5:reopenTask(todo, done);
     break;
 
-  default:return;
+  default:refresh();
   }
 }
 
 void renderMenu() {
-  WINDOW *menu_win;
+  WINDOW *menuWin;
   int highlight = 1;
   int choice = 0;
   int c;
@@ -110,17 +117,18 @@ void renderMenu() {
   int height = 3;
 
   // Selection Menu Dimensions
-  menu_win = newwin(height, width, starty, startx);
-  keypad(menu_win, TRUE);
-  mvprintw(0, 0, "Use arrow keys to go up and down, Press enter to select a choice");
+  menuWin = newwin (height, width, starty, startx);
+  keypad (menuWin, TRUE);
+  mvprintw (0, 0, "Use arrow keys to go up and down, Press enter to select a choice");
   refresh();
 
   // Print the thing
-  print_menu(menu_win, highlight);
+  print_menu (menuWin, highlight);
 
   // Press right highlight and select next option, left is the opposite
-  while (1) {
-    c = wgetch(menu_win);
+  while (1)
+    {
+      c = wgetch (menuWin);
 
     switch (c) {
     case KEY_LEFT:
@@ -147,7 +155,7 @@ void renderMenu() {
       break;
     }
 
-    print_menu(menu_win, highlight);
+      print_menu (menuWin, highlight);
 
     /* User did a choice come out of the infinite loop */
     if (choice != 0) {
@@ -155,8 +163,8 @@ void renderMenu() {
     }
   }
 
-  mvprintw(1, 0, "You chose (%s)\n", choices[choice - 1]);
-  getNextMenu(choice);
+  mvprintw (1, 0, "You chose (%s)\n", choices[choice - 1]);
+  getNextMenu (menuWin, choice);
 }
 
 /*

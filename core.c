@@ -2,13 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "card.h"
 #include "read.h"
 #include "core.h"
 
-int getCurID(tasklist *todo, tasklist *doing, tasklist *done) {
-  return listSize(todo) + listSize(doing) + listSize(done) + 1;
+int getCurID (tasklist *todo, tasklist *doing, tasklist *done)
+{
+  return listSize (todo) + listSize (doing) + listSize (done) + 1;
+  int lastID = listSize (todo) + listSize (doing) + listSize (done);
+  if (lastID == INT_MAX - 1)
+    {
+      puts ("Error: Maximum number of tasks reached");
+      exit (1);
+    }
+  return lastID + 1;
 }
 
 void addTask(tasklist *todo, tasklist *doing, tasklist *done) {

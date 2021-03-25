@@ -195,6 +195,9 @@ CURSES_INCLUDE_PATH:PATH=/usr/include
 //Path to a library.
 CURSES_NCURSES_LIBRARY:FILEPATH=/usr/lib/libncurses.so
 
+//The directory containing a CMake configuration file for Forms.
+Forms_DIR:PATH=Forms_DIR-NOTFOUND
+
 //Value Computed by CMake
 Kanban_board_BINARY_DIR:STATIC=/home/someone/University/labp/Kanban-board
 
