@@ -7,11 +7,15 @@ find_package(Curses REQUIRED)
 
 include_directories(${CURSES_INCLUDE_DIR})
 include_directories(.)
+include_directories(./utils)
 
-add_executable(
-        utils/card.c
-        utils/card.h
-        main.c
-        utils/tasklist.c
-        utils/tasklist.h utils/render.c utils/render.h)
-target_link_libraries(Kanban_board ${CURSES_LIBRARIES})
+add_executable(kanban
+./utils/card.c
+./utils/card.h
+./utils/tasklist.c
+./utils/tasklist.h
+./utils/render.c
+./utils/render.h
+main.c)
+
+target_link_libraries(kanban ${CURSES_LIBRARIES})
