@@ -16,6 +16,6 @@ add_executable(kanban
 ./utils/tasklist.h
 ./utils/render.c
 ./utils/render.h
-main.c)
+main.c utils/core.c utils/core.h)
 
 target_link_libraries(kanban ${CURSES_LIBRARIES})

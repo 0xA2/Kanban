@@ -1,16 +1,8 @@
-#include <ncurses.h>
-#include <stdlib.h>
-
 #include "render.h"
 
 /*
  * utils
  */
-tasklist *todo;
-tasklist *doing;
-tasklist *done;
-tasklist *all;
-
 char *choices[] = {
     "Add task",
     "Start task",
@@ -74,27 +66,27 @@ void print_menu(WINDOW *menuWin, int highlight) {
   wrefresh(menuWin);
 }
 
-void getNextMenu(WINDOW *menuWin, int choice) {
-  /*
+void getNextMenu(int choice) {
   switch (choice) {
-    case 1:addTask(todo, doing, done, all);
+    case 1:
+
+      addTask();
       break;
 
-    case 2:workOnTask(todo, doing);
+    case 2: workOnTask();
       break;
 
-    case 3:closeTask(doing, done);
+    case 3: closeTask();
       break;
 
-    case 4:reassignTask(doing);
+    case 4: reassignTask();
       break;
 
-    case 5:reopenTask(todo, done);
+    case 5: reopenTask();
       break;
 
-    default:refresh();
+    default: refresh();
   }
-   */
 }
 
 void renderMenu() {
@@ -158,28 +150,13 @@ void renderMenu() {
   }
 
   mvprintw(1, 0, "You chose (%s)\n", choices[choice - 1]);
-  getNextMenu(menuWin, choice);
+  getNextMenu(choice);
 }
 
 /*
  * Board shenanigans
  */
 void print_board(WINDOW *boardWin) {
-  int x, y, i;
-
-  // Padding
-  x = 2;
-  y = 1;
-
-  box(boardWin, 0, 0);
-
-  // Printing the TODO
-  for (i = 0; i < todo->size; ++i) {
-    //mvwprintw(boardWin, y, x, "%s", listPrintToDo(todo, i + 1));
-    y += 1;
-  }
-
-  wrefresh(boardWin);
 }
 
 void renderBoard() {
@@ -207,12 +184,7 @@ void renderBoard() {
 /*
  * Actually do stuff
  */
-void render(tasklist *todoR, tasklist *doingR, tasklist *doneR, tasklist *allR) {
-  todo = todoR;
-  doing = doingR;
-  done = doneR;
-  all = allR;
-
+void render(board_t* board) {
   initscr();
   clear();
   noecho();
@@ -220,6 +192,7 @@ void render(tasklist *todoR, tasklist *doingR, tasklist *doneR, tasklist *allR) 
 
   renderMenu();
   renderBoard();
+
   clrtoeol();
   refresh();
   endwin();
