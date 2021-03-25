@@ -1,4 +1,4 @@
-#include "utils/core.h"
+#include "utils/render.h"
 
 int main() {
   tasklist *all = listNew();
@@ -11,8 +11,10 @@ int main() {
       doing,
       done
   };
-  initCore(&board);
 
+  render(&board);
+
+  /*
   char title[] = "Kanban";
   char *options[] = {"Add Task", "Work on Task", "Reassign task", "Close task", "Reopen task", "View tasks by worker",
                      "View tasks by date", "Exit"};
@@ -55,7 +57,7 @@ int main() {
       default:puts("Invalid Option");
     }
   }
-
+  */
   return 0;
 }
 

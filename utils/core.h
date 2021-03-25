@@ -15,15 +15,17 @@ typedef struct board {
   tasklist *done;
 } board_t;
 
-void initCore(board_t*);
+void initCore(board_t *board_init);
 
 int readInt(int *op);
 void readString(char *buffer);
 
+/*
 void printBoard();
 void printMenu(char *title, char *options[], int count, int ident);
+*/
 
-void addTask();
+void addTask(int, char *);
 void workOnTask();
 void reassignTask();
 void closeTask();

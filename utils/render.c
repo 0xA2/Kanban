@@ -1,8 +1,9 @@
 #include "render.h"
 
-/*
- * utils
- */
+board_t *boardList;
+WINDOW *menuWin;
+WINDOW *boardWin;
+
 char *choices[] = {
     "Add task",
     "Start task",
@@ -14,27 +15,11 @@ char *choices[] = {
 
 int n_choices = sizeof(choices) / sizeof(char *);
 
-int strSize(char *str) {
-  return (sizeof(str) / sizeof(char));
-}
+// [ Here are the available features ]
+void addChoice();
+//////////////////////////////////////
 
-void updateSize() {
-  n_choices = sizeof(choices) / sizeof(char *);
-}
-
-/*
- * Menu shenanigans
- */
-void restartMenu() {
-  choices[0] = "Add task";
-  choices[1] = "Start task";
-  choices[2] = "Close task";
-  choices[3] = "Reassign task";
-  choices[4] = "Reopen a task";
-  choices[5] = "Exit";
-}
-
-void print_menu(WINDOW *menuWin, int highlight) {
+void print_menu(int highlight) {
   int x, y, i, pad;
 
   // Initial values, initial "padding"
@@ -47,50 +32,151 @@ void print_menu(WINDOW *menuWin, int highlight) {
   int effectiveSize = 0;
 
   for (int j = 0; j < n_choices; ++j) {
-    effectiveSize += strSize(choices[j]);
+    effectiveSize += (int) strlen(choices[j]);
   }
-  pad = (getmaxx(menuWin) - effectiveSize) / (n_choices - 1);
+  pad = (getmaxx(menuWin) - effectiveSize) / n_choices;
 
   // Print stuff
   for (i = 0; i < n_choices; ++i) {
-    // Highlight the current choice
     if (highlight == i + 1) {
       wattron(menuWin, A_REVERSE);
       mvwprintw(menuWin, y, x, "%s", choices[i]);
       wattroff(menuWin, A_REVERSE);
     } else
       mvwprintw(menuWin, y, x, "%s", choices[i]);
-    x += pad + strSize(choices[i]);
+    x += pad + (int) strlen(choices[i]);
   }
 
+  wmove(menuWin, 1, 2);
+  wrefresh(menuWin);
+}
+
+void clearWindow(WINDOW *win) {
+  werase(win);
+  wmove(win, 1, 2);
+  wrefresh(win);
+  box(win, 0, 0);
+}
+
+void printBoard() {
+  int x = 2;
+  int y = 1;
+
+  clearWindow(boardWin);
+
+  // Print stuff
+  for (int i = 0; i < listSize(boardList->todo); ++i) {
+    char *string = listPrintToDo(boardList->todo, i);
+    mvwprintw(boardWin, y, x, "%s", string);
+    y += 1;
+  }
+
+  wmove(boardWin, y, x);
+  wrefresh(boardWin);
+}
+
+void promptUser(char *string) {
+  clearWindow(menuWin);
+  wattron(menuWin, A_REVERSE);
+  mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), string);
+  wattroff(menuWin, A_REVERSE);
+  wrefresh(menuWin);
+  wmove(menuWin, getcury(menuWin), getcurx(menuWin) + 1);
+}
+
+void readInputInt(int *value, char *prompt) {
+  promptUser(prompt);
+
+  // Read and output visual feedback
+  int n;
+  int c = 0;
+
+  while (c != '\n') {
+    c = wgetch(menuWin);
+    n = c - '0';
+
+    if (n <= 9 && n >= 0) {
+      if (*value == 1 && n == 0) {
+        mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%d", 10);
+        *value = 10;
+      }
+
+      mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%d", n);
+      *value = n;
+    }
+  }
+
+  promptUser("Confirm? (y/n)");
+  int confirm = wgetch(menuWin);
+  if (confirm != 'y') {
+    readInputInt(value, prompt);
+  }
+  wrefresh(menuWin);
+}
+
+void readInputString(char **value, char *prompt) {
+  promptUser(prompt);
+
+  int initial_x = getcurx(menuWin) + 1;
+  int initial_y = getcury(menuWin);
+  wmove(menuWin, initial_y, initial_x);
+
+  // Read and output visual feedback
+  int c = 0;
+  int pos = 0;
+  char *buffer = (char *) malloc(1024);
+  while (c != '\n') {
+    c = wgetch(menuWin);
+
+    if ((c <= 'z' && c >= 'A') || c == ' ') {
+      mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%c", c);
+      if (c == ' ') buffer[pos] = ' ';
+      ++pos;
+      buffer[pos] = (char) (c - 'A');
+      ++pos;
+    }
+  }
+
+  value = &buffer;
+  promptUser("Confirm? (y/n)");
+
+  int confirm = wgetch(menuWin);
+  if (confirm != 'y') {
+    readInputString(value, prompt);
+  }
   wrefresh(menuWin);
 }
 
 void getNextMenu(int choice) {
   switch (choice) {
-    case 1:
-
-      addTask();
+    case 1:addChoice();
       break;
 
-    case 2: workOnTask();
-      break;
-
-    case 3: closeTask();
-      break;
-
-    case 4: reassignTask();
-      break;
-
-    case 5: reopenTask();
-      break;
-
-    default: refresh();
+    default: break;
   }
+  refresh();
+}
+
+void renderBoard() {
+  // Upper left corner of menu
+  int startx = 0;
+  int starty = 0;
+
+  // Menu dimensions
+  int width = COLS;
+  int height = LINES - 3;
+
+  // Selection Menu Dimensions
+  boardWin = newwin(height, width, starty, startx);
+
+  // Print the thing
+  wrefresh(boardWin);
+
+  // Print board :)
+  printBoard();
 }
 
 void renderMenu() {
-  WINDOW *menuWin;
   int highlight = 1;
   int choice = 0;
   int c;
@@ -106,11 +192,13 @@ void renderMenu() {
   // Selection Menu Dimensions
   menuWin = newwin(height, width, starty, startx);
   keypad(menuWin, TRUE);
-  mvprintw(0, 0, "Use arrow keys to go up and down, Press enter to select a choice");
   refresh();
 
   // Print the thing
-  print_menu(menuWin, highlight);
+  print_menu(highlight);
+
+  // Start the board
+  renderBoard();
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
@@ -136,12 +224,10 @@ void renderMenu() {
       case 10:choice = highlight;
         break;
 
-      default:mvprintw(1, 0, "Character pressed is = %3d Hopefully it can be printed as '%c'", c, c);
-        refresh();
-        break;
+      default: break;
     }
 
-    print_menu(menuWin, highlight);
+    print_menu(highlight);
 
     /* User did a choice come out of the infinite loop */
     if (choice != 0) {
@@ -149,52 +235,41 @@ void renderMenu() {
     }
   }
 
-  mvprintw(1, 0, "You chose (%s)\n", choices[choice - 1]);
+  wmove(menuWin, 1, 2);
+
+  wrefresh(menuWin);
   getNextMenu(choice);
 }
 
-/*
- * Board shenanigans
- */
-void print_board(WINDOW *boardWin) {
+void addChoice() {
+  char *priorityPrompt = "Task Priority [1-10] >";
+  char *descriptionPrompt = "Task Description >";
+  char *description = (char *) malloc(1024);
+  int priority;
+
+  readInputInt(&priority, priorityPrompt);
+
+  readInputString(&description, descriptionPrompt);
+
+  addTask(priority, description);
+  printBoard();
+  renderMenu();
 }
 
-void renderBoard() {
-  WINDOW *boardWin;
+void render(board_t *board_init) {
+  initCore(board_init);
+  boardList = board_init;
 
-  // Upper left corner of menu
-  int startx = 4;
-  int starty = 2;
-
-  // Menu dimensions
-  int width = COLS;
-  int height = LINES - 3 - 4;
-
-  // Selection Menu Dimensions
-  boardWin = newwin(height, width, starty, startx);
-  keypad(boardWin, TRUE);
-
-  // Print the thing
-  refresh();
-
-  // Print board :)
-  print_board(boardWin);
-}
-
-/*
- * Actually do stuff
- */
-void render(board_t* board) {
   initscr();
   clear();
   noecho();
   cbreak();    /* Line buffering disabled. pass on everything */
 
   renderMenu();
-  renderBoard();
 
   clrtoeol();
   refresh();
   endwin();
 }
+
 

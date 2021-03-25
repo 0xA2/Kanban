@@ -700,22 +700,30 @@ void printDate(long time) {
   printf("%s", date);
 }
 
-void listPrintToDo(tasklist *l) {
+char *listPrintToDo(tasklist *l, int i) {
+  int cur = 0;
+
   if (listIsEmpty(l)) {
-    return;
+    return NULL;
   }
+
   node *n = l->first;
-  puts("\nTo Do:");
+  char *taskInfo = malloc(180 * sizeof(char));
+
   while (n->next != NULL) {
-    printf("\tID: %d | Priority: %d\n\t%s\n\tDate added: ", n->task->id, n->task->priority, n->task->description);
-    printDate(n->task->dateCreated);
-    printf("\n\n");
+    if (cur == i) {
+      sprintf(taskInfo,
+              "\tID: %d | Priority: %d\n\t%s\n\tDate added: ",
+              n->task->id,
+              n->task->priority,
+              n->task->description);
+      //printDate(n->task->dateCreated);
+      //printf("\n\n");
+    }
     n = n->next;
   }
-  printf("\tID: %d | Priority: %d\n\t%s\n\tDate added: ", n->task->id, n->task->priority, n->task->description);
-  printDate(n->task->dateCreated);
-  printf("\n\n\n");
 
+  return taskInfo;
 }
 
 void listPrintDoing(tasklist *l) {

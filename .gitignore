@@ -4,3 +4,13 @@
 /cmake_install.cmake
 /CMakeCache.txt
 /Kanban_board.cb
+Kanban_board
+Kanban_board.cbp
+Makefile
+cmake_install.cmake
+CMakeCache.txt
+.idea
+doing.txt
+done.txt
+todo.txt
+kanban

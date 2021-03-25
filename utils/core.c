@@ -3,8 +3,8 @@
 #define MAX_TASKS 10
 
 board_t *board;
-void initCore(board_t *boardInit) {
-  board = boardInit;
+void initCore(board_t *board_init) {
+  board = board_init;
 }
 
 // --- Read Functions --- //
@@ -70,7 +70,7 @@ void readString(char *buffer) {
 
 
 // --- Print Functions --- //
-
+/*
 void printBoard() {
   // Function for keeping the board on screen
   listPrintToDo(board->todo);
@@ -91,7 +91,7 @@ void printMenu(char *title, char *options[], int count, int ident) {
     puts(options[i]);
   }
 }
-
+*/
 
 // --- Functions for core operations --- //
 
@@ -104,21 +104,11 @@ int getCurID() {
   return lastID + 1;
 }
 
-void addTask() {
-
-  // Ask user for task priority
-  printf("Task Priority[1-10] > ");
-  int pri;
-  readInt(&pri);
-
-  // Ask user for task description
-  printf("Task Description > ");
-  char *desc = (char *) malloc(1024);
-  readString(desc);
-
+void addTask(int priority, char *description) {
   card *toAdd;
-  int id = getCurID(board);
-  if ((toAdd = cardNew(id, pri, time(NULL), desc)) != NULL) {
+  int id = getCurID();
+
+  if ((toAdd = cardNew(id, priority, time(NULL), description)) != NULL) {
     listAddByPriority(toAdd, board->todo);
     listAddByDate(toAdd, board->all);
   }
