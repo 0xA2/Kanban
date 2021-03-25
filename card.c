@@ -11,8 +11,8 @@ card* cardNew(int i, int pri, long time ,char *desc) {
 	else if(pri < 1){ return NULL;}
     else{l->priority = pri;}
     l->dateCreated = time;
-    l->dateDue = 0;
-    l->dateConclusion = 0;
+    l->deadline = 0;
+    l->dateConcluded = 0;
     l->description = desc;
     l->person = NULL;
   }
@@ -27,14 +27,10 @@ char* cardGetAssign(card* c){
 	return c -> person;
 }
 
-void cardSetDateCreated(card* c, long d){
-	c->dateCreated = d;
-}
-
-void cardSetDateDue(card* c, long d){
-	c->dateDue=d;
+void cardSetDeadline(card* c, long d){
+	c->deadline=d;
 }
 
 void cardSetDateConcluded(card* c, long d){
-	c->dateConclusion=d;
+	c->dateConcluded=d;
 }
