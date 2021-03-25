@@ -701,27 +701,27 @@ void printDate(long time) {
 }
 
 char *listPrintToDo(tasklist *l, int i) {
-  int cur = 0;
-
   if (listIsEmpty(l)) {
     return NULL;
   }
 
   node *n = l->first;
-  char *taskInfo = malloc(180 * sizeof(char));
+  char *taskInfo = (char *) malloc(1024);
+  int cur = 0;
 
   while (n->next != NULL) {
-    if (cur == i) {
-      sprintf(taskInfo,
-              "\tID: %d | Priority: %d\n\t%s\n\tDate added: ",
-              n->task->id,
-              n->task->priority,
-              n->task->description);
-      //printDate(n->task->dateCreated);
-      //printf("\n\n");
-    }
+    if (cur == i) break;
     n = n->next;
+    ++cur;
   }
+
+  sprintf(taskInfo,
+          "[[ID: %d] [Priority: %d] [%s]]",
+          n->task->id,
+          n->task->priority,
+          n->task->description);
+  //printDate(n->task->dateCreated);
+  //printf("\n\n");
 
   return taskInfo;
 }

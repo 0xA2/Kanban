@@ -15,9 +15,11 @@ char *choices[] = {
 
 int n_choices = sizeof(choices) / sizeof(char *);
 
-// [ Here are the available features ]
+// [ Here are the available features implemented in the UI ]
+// btw this is needed lol, if you call a function it needs
+// to be before it in the code, kinda meme way to do it
 void addChoice();
-//////////////////////////////////////
+////////////////////////////////////////////////////////////
 
 void print_menu(int highlight) {
   int x, y, i, pad;
@@ -59,19 +61,15 @@ void clearWindow(WINDOW *win) {
 }
 
 void printBoard() {
-  int x = 2;
-  int y = 1;
-
   clearWindow(boardWin);
 
   // Print stuff
   for (int i = 0; i < listSize(boardList->todo); ++i) {
     char *string = listPrintToDo(boardList->todo, i);
-    mvwprintw(boardWin, y, x, "%s", string);
-    y += 1;
+    waddstr(boardWin, string);
+    wmove(boardWin, getcury(boardWin) + 1, 2);
   }
 
-  wmove(boardWin, y, x);
   wrefresh(boardWin);
 }
 
@@ -97,12 +95,11 @@ void readInputInt(int *value, char *prompt) {
 
     if (n <= 9 && n >= 0) {
       if (*value == 1 && n == 0) {
-        mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%d", 10);
         *value = 10;
+      } else {
+        *value = n;
       }
-
       mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%d", n);
-      *value = n;
     }
   }
 
@@ -123,24 +120,22 @@ void readInputString(char **value, char *prompt) {
 
   // Read and output visual feedback
   int c = 0;
-  int pos = 0;
-  char *buffer = (char *) malloc(1024);
+  char ch;
+
   while (c != '\n') {
     c = wgetch(menuWin);
+    ch = (char) (c);
 
-    if ((c <= 'z' && c >= 'A') || c == ' ') {
+    if ((ch <= 'z' && ch >= 'A') || ch == ' ') {
       mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%c", c);
-      if (c == ' ') buffer[pos] = ' ';
-      ++pos;
-      buffer[pos] = (char) (c - 'A');
-      ++pos;
+      strncat(*value, &ch, 1);
     }
   }
 
-  value = &buffer;
   promptUser("Confirm? (y/n)");
 
   int confirm = wgetch(menuWin);
+
   if (confirm != 'y') {
     readInputString(value, prompt);
   }
