@@ -2,14 +2,14 @@
 #include <stdlib.h>
 
 #include "render.h"
-#include "core.h"
 
 /*
- * Utils
+ * utils
  */
 tasklist *todo;
 tasklist *doing;
 tasklist *done;
+tasklist *all;
 
 char *choices[] = {
     "Add task",
@@ -42,8 +42,7 @@ void restartMenu() {
   choices[5] = "Exit";
 }
 
-void print_menu (WINDOW *menuWin, int highlight)
-{
+void print_menu(WINDOW *menuWin, int highlight) {
   int x, y, i, pad;
 
   // Initial values, initial "padding"
@@ -55,51 +54,47 @@ void print_menu (WINDOW *menuWin, int highlight)
   // Get padding
   int effectiveSize = 0;
 
-  for (int j = 0; j < n_choices; ++j)
-    {
-      effectiveSize += strSize (choices[j]);
-    }
+  for (int j = 0; j < n_choices; ++j) {
+    effectiveSize += strSize(choices[j]);
+  }
   pad = (getmaxx(menuWin) - effectiveSize) / (n_choices - 1);
 
   // Print stuff
   for (i = 0; i < n_choices; ++i) {
     // Highlight the current choice
-    if (highlight == i + 1)
-      {
-        wattron(menuWin, A_REVERSE);
-        mvwprintw (menuWin, y, x, "%s", choices[i]);
-        wattroff(menuWin, A_REVERSE);
-      } else
-      mvwprintw (menuWin, y, x, "%s", choices[i]);
+    if (highlight == i + 1) {
+      wattron(menuWin, A_REVERSE);
+      mvwprintw(menuWin, y, x, "%s", choices[i]);
+      wattroff(menuWin, A_REVERSE);
+    } else
+      mvwprintw(menuWin, y, x, "%s", choices[i]);
     x += pad + strSize(choices[i]);
   }
 
-  wrefresh (menuWin);
+  wrefresh(menuWin);
 }
 
-void getNextMenu (WINDOW *menuWin, int choice)
-{
-  initCore (menuWin);
-
-  switch (choice)
-    {
-  case 1:addTask (todo, doing, done);
+void getNextMenu(WINDOW *menuWin, int choice) {
+  /*
+  switch (choice) {
+    case 1:addTask(todo, doing, done, all);
       break;
 
-  case 2:workOnTask (todo, doing);
+    case 2:workOnTask(todo, doing);
       break;
 
-  case 3:closeTask (doing, done);
+    case 3:closeTask(doing, done);
       break;
 
-  case 4:reAssignTask(doing);
-    break;
+    case 4:reassignTask(doing);
+      break;
 
-  case 5:reopenTask(todo, done);
-    break;
+    case 5:reopenTask(todo, done);
+      break;
 
-  default:refresh();
+    default:refresh();
   }
+   */
 }
 
 void renderMenu() {
@@ -117,45 +112,44 @@ void renderMenu() {
   int height = 3;
 
   // Selection Menu Dimensions
-  menuWin = newwin (height, width, starty, startx);
-  keypad (menuWin, TRUE);
-  mvprintw (0, 0, "Use arrow keys to go up and down, Press enter to select a choice");
+  menuWin = newwin(height, width, starty, startx);
+  keypad(menuWin, TRUE);
+  mvprintw(0, 0, "Use arrow keys to go up and down, Press enter to select a choice");
   refresh();
 
   // Print the thing
-  print_menu (menuWin, highlight);
+  print_menu(menuWin, highlight);
 
   // Press right highlight and select next option, left is the opposite
-  while (1)
-    {
-      c = wgetch (menuWin);
+  while (1) {
+    c = wgetch(menuWin);
 
     switch (c) {
-    case KEY_LEFT:
-      if (highlight == 1) {
-        highlight = n_choices;
-      } else {
-        --highlight;
-      }
-      break;
+      case KEY_LEFT:
+        if (highlight == 1) {
+          highlight = n_choices;
+        } else {
+          --highlight;
+        }
+        break;
 
-    case KEY_RIGHT:
-      if (highlight == n_choices) {
-        highlight = 1;
-      } else {
-        ++highlight;
-      }
-      break;
+      case KEY_RIGHT:
+        if (highlight == n_choices) {
+          highlight = 1;
+        } else {
+          ++highlight;
+        }
+        break;
 
-    case 10:choice = highlight;
-      break;
+      case 10:choice = highlight;
+        break;
 
-    default:mvprintw(1, 0, "Character pressed is = %3d Hopefully it can be printed as '%c'", c, c);
-      refresh();
-      break;
+      default:mvprintw(1, 0, "Character pressed is = %3d Hopefully it can be printed as '%c'", c, c);
+        refresh();
+        break;
     }
 
-      print_menu (menuWin, highlight);
+    print_menu(menuWin, highlight);
 
     /* User did a choice come out of the infinite loop */
     if (choice != 0) {
@@ -163,8 +157,8 @@ void renderMenu() {
     }
   }
 
-  mvprintw (1, 0, "You chose (%s)\n", choices[choice - 1]);
-  getNextMenu (menuWin, choice);
+  mvprintw(1, 0, "You chose (%s)\n", choices[choice - 1]);
+  getNextMenu(menuWin, choice);
 }
 
 /*
@@ -181,7 +175,7 @@ void print_board(WINDOW *boardWin) {
 
   // Printing the TODO
   for (i = 0; i < todo->size; ++i) {
-    mvwprintw(boardWin, y, x, "%s", listPrintToDo(todo, i + 1));
+    //mvwprintw(boardWin, y, x, "%s", listPrintToDo(todo, i + 1));
     y += 1;
   }
 
@@ -213,10 +207,11 @@ void renderBoard() {
 /*
  * Actually do stuff
  */
-void render(tasklist *todoR, tasklist *doingR, tasklist *doneR) {
+void render(tasklist *todoR, tasklist *doingR, tasklist *doneR, tasklist *allR) {
   todo = todoR;
   doing = doingR;
   done = doneR;
+  all = allR;
 
   initscr();
   clear();
