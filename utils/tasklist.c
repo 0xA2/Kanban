@@ -710,13 +710,13 @@ char *listPrintToDo(tasklist *l, int i) {
   int cur = 0;
 
   while (n->next != NULL) {
-    if (cur == i) break;
+    if (++cur == i) break;
     n = n->next;
     ++cur;
   }
 
   sprintf(taskInfo,
-          "[[ID: %d] [Priority: %d] [%s]]",
+          "[ID: %d | Priority: %d]\n%s",
           n->task->id,
           n->task->priority,
           n->task->description);

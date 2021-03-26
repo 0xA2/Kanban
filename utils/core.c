@@ -8,6 +8,7 @@ void initCore(board_t *board_init) {
 }
 
 // --- Read Functions --- //
+
 int readInt(int *op) {
 
   // Function to read user input and use it as an integer
@@ -67,31 +68,6 @@ void readString(char *buffer) {
   // Exit if something goes wrong while reading input
   exit(1);
 }
-
-
-// --- Print Functions --- //
-/*
-void printBoard() {
-  // Function for keeping the board on screen
-  listPrintToDo(board->todo);
-  listPrintDoing(board->doing);
-  listPrintDone(board->done);
-}
-
-void printMenu(char *title, char *options[], int count, int ident) {
-  // Function for printing main menu
-  for (int i = 0; i < strlen(title) + ident; i++) { printf("-"); }
-  printf("\n");
-  for (int i = 0; i < ident / 2; i++) { printf(" "); }
-  printf("%s\n", title);
-  for (int i = 0; i < strlen(title) + ident; i++) { printf("-"); }
-  printf("\n");
-  for (int i = 0; i < count; i++) {
-    printf("%d) ", i + 1);
-    puts(options[i]);
-  }
-}
-*/
 
 // --- Functions for core operations --- //
 

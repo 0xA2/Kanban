@@ -1,6 +1,9 @@
+#include <locale.h>
 #include "utils/render.h"
 
 int main() {
+  setlocale(LC_ALL, "");
+
   tasklist *all = listNew();
   tasklist *todo = loadToDo(all);
   tasklist *doing = loadDoing(all);
@@ -58,6 +61,7 @@ int main() {
     }
   }
   */
-  return 0;
+
+  return EXIT_SUCCESS;
 }
 
