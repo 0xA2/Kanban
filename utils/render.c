@@ -1,9 +1,15 @@
 #include "render.h"
 
+//////////////////////////////////////////////////////
 board_t *boardList;
 WINDOW *menuWin;
-WINDOW *boardWin;
-
+WINDOW *todoBoard;
+WINDOW *todoBoardIn;
+WINDOW *doingBoard;
+WINDOW *doingBoardIn;
+WINDOW *doneBoard;
+WINDOW *doneBoardIn;
+//////////////////////////////////////////////////////
 char *choices[] = {
     "Add task",
     "Start task",
@@ -14,67 +20,86 @@ char *choices[] = {
 };
 
 int n_choices = sizeof(choices) / sizeof(char *);
-
-// [ Here are the available features implemented in the UI ]
-// btw this is needed lol, if you call a function it needs
-// to be before it in the code, kinda meme way to do it
-void addChoice();
-////////////////////////////////////////////////////////////
-
-void print_menu(int highlight) {
-  int x, y, i, pad;
-
-  // Initial values, initial "padding"
-  x = 2;
-  y = 1;
-
-  box(menuWin, 0, 0);
-
-  // Get padding
-  int effectiveSize = 0;
-
-  for (int j = 0; j < n_choices; ++j) {
-    effectiveSize += (int) strlen(choices[j]);
-  }
-  pad = (getmaxx(menuWin) - effectiveSize) / n_choices;
-
-  // Print stuff
-  for (i = 0; i < n_choices; ++i) {
-    if (highlight == i + 1) {
-      wattron(menuWin, A_REVERSE);
-      mvwprintw(menuWin, y, x, "%s", choices[i]);
-      wattroff(menuWin, A_REVERSE);
-    } else
-      mvwprintw(menuWin, y, x, "%s", choices[i]);
-    x += pad + (int) strlen(choices[i]);
-  }
-
-  wmove(menuWin, 1, 2);
-  wrefresh(menuWin);
-}
+//////////////////////////////////////////////////////
+void choiceLoop();
+//////////////////////////////////////////////////////
 
 void clearWindow(WINDOW *win) {
   werase(win);
   wmove(win, 1, 2);
   wrefresh(win);
-  box(win, 0, 0);
 }
 
-void printBoard() {
-  clearWindow(boardWin);
+void initBoard() {
+  int startx = 0;
+  int width = (COLS - 2) / 3;
+  int height = LINES - 3;
 
-  // Print stuff
-  for (int i = 0; i < listSize(boardList->todo); ++i) {
-    char *string = listPrintToDo(boardList->todo, i);
-    waddstr(boardWin, string);
-    wmove(boardWin, getcury(boardWin) + 1, 2);
+  todoBoard = newwin(height, width, 0, startx);
+  todoBoardIn = newwin(height - 2, width - 2, 1, startx + 1);
+  box(todoBoard, 0, 0);
+
+  startx += width + 1;
+  doingBoard = newwin(height, width, 0, startx);
+  doingBoardIn = newwin(height - 2, width - 2, 1, startx + 1);
+  box(doingBoard, 0, 0);
+
+  startx += width + 1;
+  doneBoard = newwin(height, width, 0, startx);
+  doneBoardIn = newwin(height - 2, width - 2, 1, startx + 1);
+  box(doneBoard, 0, 0);
+}
+
+void windowsRefresh() {
+  wrefresh(todoBoard);
+  wrefresh(doingBoard);
+  wrefresh(doneBoard);
+  wrefresh(todoBoardIn);
+  wrefresh(doingBoardIn);
+  wrefresh(doneBoardIn);
+  wrefresh(menuWin);
+}
+
+void printList(WINDOW *win, tasklist *list) {
+  for (int i = 0; i < listSize(list); ++i) {
+    char *string = listPrintToDo(list, i);
+    waddstr(win, string);
+    wmove(win, getcury(win) + 1, 0);
   }
+}
 
-  wrefresh(boardWin);
+void title(WINDOW *win, char *title) {
+  int startx = (getmaxx(win) - (int) strlen(title)) / 2;
+  wmove(win, 0, startx);
+  wattron(win, A_REVERSE);
+  waddstr(win, title);
+  wattroff(win, A_REVERSE);
+}
+
+void refreshBoard() {
+  refresh();
+  clearok(todoBoardIn, true);
+  clearok(doingBoardIn, true);
+  clearok(doneBoardIn, true);
+
+  // Print todo
+  title(todoBoard, "| TODO |");
+  printList(todoBoardIn, boardList->todo);
+
+  // Print doing
+  title(doingBoard, "| DOING |");
+  printList(todoBoardIn, boardList->todo);
+
+  // Print done
+  title(doneBoard, "| DONE |");
+  printList(todoBoardIn, boardList->todo);
+
+  windowsRefresh();
 }
 
 void promptUser(char *string) {
   clearWindow(menuWin);
+  box(menuWin, 0, 0);
   wattron(menuWin, A_REVERSE);
   mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), string);
   wattroff(menuWin, A_REVERSE);
@@ -142,58 +167,67 @@ void readInputString(char **value, char *prompt) {
   wrefresh(menuWin);
 }
 
+void printMenu(int highlight) {
+  int x, y, i, pad;
+
+  // Initial values, initial "padding"
+  x = 2;
+  y = 1;
+
+  box(menuWin, 0, 0);
+
+  // Get padding
+  int effectiveSize = 0;
+
+  for (int j = 0; j < n_choices; ++j) {
+    effectiveSize += (int) strlen(choices[j]);
+  }
+  pad = (getmaxx(menuWin) - effectiveSize) / n_choices;
+
+  // Print stuff
+  for (i = 0; i < n_choices; ++i) {
+    if (highlight == i + 1) {
+      wattron(menuWin, A_REVERSE);
+      mvwprintw(menuWin, y, x, "%s", choices[i]);
+      wattroff(menuWin, A_REVERSE);
+    } else
+      mvwprintw(menuWin, y, x, "%s", choices[i]);
+    x += pad + (int) strlen(choices[i]);
+  }
+
+  wmove(menuWin, 1, 2);
+  wrefresh(menuWin);
+}
+
+void addChoice() {
+  char *priorityPrompt = "Task Priority [1-10] >";
+  char *descriptionPrompt = "Task Description >";
+  char *description = (char *) (malloc(80 * sizeof(char)));
+  int priority;
+
+  readInputInt(&priority, priorityPrompt);
+
+  readInputString(&description, descriptionPrompt);
+
+  addTask(priority, description);
+  refreshBoard();
+  windowsRefresh();
+  choiceLoop();
+}
+
 void getNextMenu(int choice) {
   switch (choice) {
     case 1:addChoice();
       break;
 
-    default: break;
+    default: saveTasks(boardList->todo, boardList->doing, boardList->done);
   }
-  refresh();
 }
 
-void renderBoard() {
-  // Upper left corner of menu
-  int startx = 0;
-  int starty = 0;
-
-  // Menu dimensions
-  int width = COLS;
-  int height = LINES - 3;
-
-  // Selection Menu Dimensions
-  boardWin = newwin(height, width, starty, startx);
-
-  // Print the thing
-  wrefresh(boardWin);
-
-  // Print board :)
-  printBoard();
-}
-
-void renderMenu() {
+void choiceLoop() {
   int highlight = 1;
   int choice = 0;
   int c;
-
-  // Upper left corner of menu
-  int startx = 0;
-  int starty = LINES - 3;
-
-  // Menu dimensions
-  int width = COLS;
-  int height = 3;
-
-  // Selection Menu Dimensions
-  menuWin = newwin(height, width, starty, startx);
-  keypad(menuWin, TRUE);
-  refresh();
-
-  // Print the thing
-  print_menu(highlight);
-
-  // Start the board
-  renderBoard();
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
@@ -222,7 +256,7 @@ void renderMenu() {
       default: break;
     }
 
-    print_menu(highlight);
+    printMenu(highlight);
 
     /* User did a choice come out of the infinite loop */
     if (choice != 0) {
@@ -230,25 +264,32 @@ void renderMenu() {
     }
   }
 
-  wmove(menuWin, 1, 2);
-
   wrefresh(menuWin);
   getNextMenu(choice);
 }
 
-void addChoice() {
-  char *priorityPrompt = "Task Priority [1-10] >";
-  char *descriptionPrompt = "Task Description >";
-  char *description = (char *) malloc(1024);
-  int priority;
+void renderMenu() {
+  // Upper left corner of menu
+  int startx = 0;
+  int starty = LINES - 3;
 
-  readInputInt(&priority, priorityPrompt);
+  // Menu dimensions
+  int width = COLS;
+  int height = 3;
 
-  readInputString(&description, descriptionPrompt);
+  // Selection Menu Dimensions
+  menuWin = newwin(height, width, starty, startx);
+  keypad(menuWin, TRUE);
+  refresh();
 
-  addTask(priority, description);
-  printBoard();
-  renderMenu();
+  // Print the thing
+  printMenu(1);
+
+  // Start the board
+  initBoard();
+  refreshBoard();
+
+  choiceLoop();
 }
 
 void render(board_t *board_init) {
