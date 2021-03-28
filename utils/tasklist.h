@@ -36,7 +36,7 @@ tasklist *loadAll();
 void saveTasks(tasklist *, tasklist *, tasklist *);
 long dateToLong(int, int, int);
 void printDate(long);
-char *listPrintToDo(tasklist *, int);
+char *listPrint(tasklist *, int, int);
 void listPrintDoing(tasklist *);
 void listPrintDone(tasklist *);
 #endif

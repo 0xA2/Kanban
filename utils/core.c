@@ -8,65 +8,29 @@ void initCore(board_t *board_init) {
 }
 
 // --- Read Functions --- //
-
-int readInt(int *op) {
+int readInt(int *op, char *buffer) {
 
   // Function to read user input and use it as an integer
   // Non digit characters will be ignored
 
   long toInt;
-  char buffer[1024];
-
-  if (fgets(buffer, 1024, stdin) != NULL) {
-    size_t len = strlen(buffer);
-
-    // Clear stdin if more than 1024 characters are read
-    if (len > 0 && buffer[len - 1] != '\n') {
-      int clear;
-      while ((clear = getchar()) != '\n' && clear != EOF);
-    }
-  } else {
-    printf("\n");
-    exit(1);
-  }
 
   // Convert string input into long and ignore not digit characters
   char *end;
   errno = 0;
   toInt = strtol(buffer, &end, 10);
 
-
   // Check errors
 
-  if (errno == ERANGE) { return 0; }
-
-  if (end == buffer) { return 0; }
-
-  if (*end && *end != '\n') { return 0; }
-
-  if (toInt > INT_MAX || toInt < INT_MIN) { return 0; }
-
-  *op = (int) toInt;
-  return 1;
-}
-
-void readString(char *buffer) {
-  // Function to read user input and use it as a string
-  if (fgets(buffer, 1024, stdin) != NULL) {
-    size_t len = strlen(buffer);
-
-    // Clear stdin if more than 1024 characters are read
-    if (len > 0 && buffer[len - 1] != '\n') {
-      int clear;
-      while ((clear = getchar()) != '\n' && clear != EOF);
-    }
-    buffer[strcspn(buffer, "\n")] = 0;
-    buffer[strcspn(buffer, "|")] = 0;
-    return;
+  if (errno == ERANGE
+      || end == buffer
+      || (*end && *end != '\n')
+      || (toInt > INT_MAX || toInt < INT_MIN)) {
+    return 0;
+  } else {
+    *op = (int) toInt;
+    return 1;
   }
-
-  // Exit if something goes wrong while reading input
-  exit(1);
 }
 
 // --- Functions for core operations --- //
@@ -90,31 +54,36 @@ void addTask(int priority, char *description) {
   }
 }
 
-void workOnTask() {
+/*
+int workOnTask(int id, int day, int month, int year, char *person) {
 
   // Check if MAX_TASKS has been reached
   if (board->doing->size >= MAX_TASKS) {
-    puts("\n----------------------------");
-    puts("You can't work on more tasks");
-    puts("----------------------------\n");
-    getchar();
-    return;
+    return -1;
   }
-
-  // Ask user for task id
-  printf("Task id > ");
-  int id;
-  readInt(&id);
 
   // Chech if task exists in todo
   if (!listTaskExists(id, board->todo)) {
-    puts("\n--------------------------");
-    puts("No task found for given id");
-    puts("--------------------------\n");
-    getchar();
-    return;
+    return 0;
   }
 
+  char buffer[100];
+  struct tm date;
+  memset(&date, 0, sizeof(date));
+  date.tm_mday = day;
+  date.tm_mon = month;
+  date.tm_mon = year;
+
+  if (sprintf(buffer, "%d/%d/%d", date.tm_mday, date.tm_mon, date.tm_year) == 3)
+  {
+    const char *format;
+
+    format = "Dated %A %dth of %B, %Y";
+    if (strftime(buffer, sizeof(buffer), format, &date) > sizeof(buffer))
+      fprintf(stderr, "there was a problem converting the string\n");
+    else
+      fprintf(stdout, "%s\n", buffer);
+  }
 
   // Ask user for date
   puts("\nSet deadline:");
@@ -230,11 +199,9 @@ void workOnTask() {
 
 }
 
-void reassignTask() {
+void reassignTask(int id) {
   // Ask user for task id
   printf("Task id > ");
-  int id;
-  readInt(&id);
 
   // Chech if task exists in todo
   if (!listTaskExists(id, board->doing)) {
@@ -256,12 +223,10 @@ void reassignTask() {
   }
 }
 
-void closeTask() {
+void closeTask(int id) {
 
   // Ask user for task id
   printf("Task id > ");
-  int id;
-  readInt(&id);
 
   // Chech if task exists in todo
   if (!listTaskExists(id, board->doing)) {
@@ -286,12 +251,10 @@ void closeTask() {
 
 }
 
-void reopenTask() {
+void reopenTask(int id) {
 
   // Ask user for task id
   printf("Task id > ");
-  int id;
-  readInt(&id);
 
   // Chech if task exists in done
   if (!listGetTaskByID(id, board->done)) {
@@ -403,3 +366,5 @@ void tasksByDate() {
   printf("\n");
   getchar();
 }
+
+*/

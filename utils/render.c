@@ -23,6 +23,71 @@ int n_choices = sizeof(choices) / sizeof(char *);
 //////////////////////////////////////////////////////
 
 /* UTILS */
+
+char *trimwhitespace(char *str) {
+  char *end;
+
+  // Trim leading space
+  while (isspace((unsigned char) *str)) str++;
+
+  // All spaces?
+  if (*str == 0)
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while (end > str && isspace((unsigned char) *end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+
+  return str;
+}
+
+void driver(FORM *form) {
+  pos_form_cursor(form);
+  refresh();
+
+  int ch = 0;
+
+  while (1) {
+    ch = wgetch(menuWin);
+
+    // KEY_ENTER doesn't work, this works
+    if (ch == 10) {
+      break;
+    }
+
+    switch (ch) {
+      case KEY_LEFT:form_driver(form, REQ_PREV_CHAR);
+        break;
+
+      case KEY_RIGHT:form_driver(form, REQ_NEXT_CHAR);
+        break;
+
+      case KEY_DOWN:form_driver(form, REQ_NEXT_FIELD);
+        form_driver(form, REQ_END_LINE);
+        break;
+
+      case KEY_UP:form_driver(form, REQ_PREV_FIELD);
+        form_driver(form, REQ_END_LINE);
+        break;
+
+      case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
+        break;
+
+      default:form_driver(form, ch);
+        break;
+    }
+
+    wrefresh(stdscr);
+  }
+
+  // All good to continue
+  form_driver(form, REQ_LAST_FIELD);
+  form_driver(form, REQ_VALIDATION);
+}
+
 void title(WINDOW *win, char *title) {
   int startx = (getmaxx(win) - (int) strlen(title)) / 2;
   wmove(win, 0, startx);
@@ -59,94 +124,21 @@ void initBoard() {
   box(doneBoard, 0, 0);
 }
 
-void promptUser(char *string) {
-  wclear(menuWin);
-  box(menuWin, 0, 0);
-  wmove(menuWin, 1, 2);
-
-  wattron(menuWin, A_REVERSE);
-  mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), string);
-  wattroff(menuWin, A_REVERSE);
-
-  wmove(menuWin, getcury(menuWin), getcurx(menuWin) + 1);
-  wrefresh(menuWin);
-}
-
-void readInputInt(int *value, char *prompt) {
-  promptUser(prompt);
-
-  // Read and output visual feedback
-  int n;
-  int c = 0;
-
-  while (c != '\n') {
-    c = wgetch(menuWin);
-    n = c - '0';
-
-    if (n <= 9 && n >= 0) {
-      if (*value == 1 && n == 0) {
-        *value = 10;
-      } else {
-        *value = n;
-      }
-      mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%d", n);
-    }
-  }
-
-  promptUser("Confirm? (y/n)");
-  int confirm = wgetch(menuWin);
-  if (confirm != 'y') {
-    readInputInt(value, prompt);
-  }
-}
-
-void readInputString(char **value, char *prompt) {
-  promptUser(prompt);
-
-  int initial_x = getcurx(menuWin) + 1;
-  int initial_y = getcury(menuWin);
-  wmove(menuWin, initial_y, initial_x);
-
-  // Read and output visual feedback
-  int c = 0;
-  char ch;
-
-  while (c != '\n') {
-    c = wgetch(menuWin);
-    ch = (char) (c);
-
-    if ((ch <= 'z' && ch >= 'A') || ch == ' ') {
-      mvwprintw(menuWin, getcury(menuWin), getcurx(menuWin), "%c", c);
-      strncat(*value, &ch, 1);
-    }
-  }
-
-  promptUser("Confirm? (y/n)");
-
-  int confirm = wgetch(menuWin);
-  if (confirm != 'y') {
-    readInputString(value, prompt);
-  }
-}
-
 //////////////////////////////////////////////////////
 
 /* PRINT STUFF */
 
-void printList(WINDOW *win, tasklist *list) {
-  werase(win);
+void printList(WINDOW *win, tasklist *list, int option) {
   wmove(win, 0, 0);
 
   whline(win, ACS_HLINE, getmaxx(win));
   for (int i = 0; i < listSize(list); ++i) {
-    char *string = listPrintToDo(list, i);
+    char *string = listPrint(list, i, option);
     wmove(win, getcury(win) + 1, 0);
     waddstr(win, string);
     wmove(win, getcury(win) + 1, 0);
     whline(win, ACS_HLINE, getmaxx(win));
   }
-
-  wrefresh(win);
 }
 
 void renderMenu(int highlight) {
@@ -197,15 +189,15 @@ void renderBoard() {
 
   // Print todo
   title(todoBoard, "| TODO |");
-  printList(todoBoardIn, boardList->todo);
+  printList(todoBoardIn, boardList->todo, 1);
 
   // Print doing
   title(doingBoard, "| DOING |");
-  printList(doingBoardIn, boardList->todo);
+  printList(doingBoardIn, boardList->doing, 2);
 
   // Print done
   title(doneBoard, "| DONE |");
-  printList(doneBoardIn, boardList->todo);
+  printList(doneBoardIn, boardList->done, 3);
 
   wrefresh(todoBoard);
   wrefresh(todoBoardIn);
@@ -220,16 +212,58 @@ void renderBoard() {
 /* MAIN UI LOOP */
 
 void addChoice() {
-  char *priorityPrompt = "Task Priority [1-10] >";
-  char *descriptionPrompt = "Task Description >";
-  char *description = (char *) (malloc(80 * sizeof(char)));
-  int priority;
+  FORM *form;
+  FIELD *fields[4];
 
-  readInputInt(&priority, priorityPrompt);
+  fields[0] = new_field(1, 20, 0, 0, 0, 0);
+  fields[1] = new_field(1, 40, 0, 20, 0, 0);
+  fields[2] = new_field(1, 20, 2, 0, 0, 0);
+  fields[3] = new_field(1, 40, 2, 20, 0, 0);
 
-  readInputString(&description, descriptionPrompt);
+  set_field_type(fields[1], TYPE_NUMERIC, 0, 10);
+  set_field_type(fields[3], TYPE_ALPHA, 40);
 
-  addTask(priority, description);
+  set_field_buffer(fields[0], 0, "Priority [1-10]:");
+  set_field_buffer(fields[2], 0, "Description:");
+
+  // Skip non input fields
+  set_field_opts(fields[0], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
+  set_field_opts(fields[1], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+  set_field_opts(fields[2], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
+  set_field_opts(fields[3], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+
+  // Input fields look
+  set_field_back(fields[1], A_UNDERLINE);
+  set_field_back(fields[3], A_UNDERLINE);
+
+  form = new_form(fields);
+  set_form_win(form, stdscr);
+  set_form_sub(form, derwin(stdscr, 18, 76, 1, 1));
+  post_form(form);
+
+  wrefresh(stdscr);
+
+  driver(form);
+
+  // Reading priority
+  char *priorityBuffer = strtok(field_buffer(fields[1], 0), " ");
+  int priorityInt;
+  readInt(&priorityInt, priorityBuffer);
+
+  // Reading description
+  char *descriptionBuffer = (char *) malloc(40 * sizeof(char));
+  strcpy(descriptionBuffer, field_buffer(fields[3], 0));
+  trimwhitespace(descriptionBuffer);
+
+  addTask(priorityInt, descriptionBuffer);
+
+  unpost_form(form);
+
+  free_form(form);
+  free_field(fields[0]);
+  free_field(fields[1]);
+  free_field(fields[2]);
+  free_field(fields[3]);
 
   choiceLoop();
 }
@@ -303,7 +337,3 @@ void render(board_t *board_init) {
   refresh();
   endwin();
 }
-
-
-
-

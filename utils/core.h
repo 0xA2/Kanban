@@ -17,8 +17,8 @@ typedef struct board {
 
 void initCore(board_t *board_init);
 
-int readInt(int *op);
-void readString(char *buffer);
+int readInt(int *, char *);
+void readString(char *);
 
 /*
 void printBoard();
@@ -26,9 +26,9 @@ void printMenu(char *title, char *options[], int count, int ident);
 */
 
 void addTask(int, char *);
-void workOnTask();
+int workOnTask(int, int, int, int, char *);
 void reassignTask();
-void closeTask();
+// void closeTask(int id);
 void reopenTask();
 void tasksFromWorker();
 void tasksByDate();

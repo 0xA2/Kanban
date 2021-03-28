@@ -700,7 +700,7 @@ void printDate(long time) {
   printf("%s", date);
 }
 
-char *listPrintToDo(tasklist *l, int i) {
+char *listPrint(tasklist *l, int i, int option) {
   if (listIsEmpty(l)) {
     return NULL;
   }
@@ -710,16 +710,41 @@ char *listPrintToDo(tasklist *l, int i) {
   int cur = 0;
 
   while (n->next != NULL) {
-    if (++cur == i) break;
+    if (cur == i) break;
     n = n->next;
     ++cur;
   }
 
-  sprintf(taskInfo,
-          "[ID: %d | Priority: %d]\n%s",
-          n->task->id,
-          n->task->priority,
-          n->task->description);
+  switch (option) {
+    case 1:
+      sprintf(taskInfo,
+              "[ID: %d | Priority: %d]\n%s",
+              n->task->id,
+              n->task->priority,
+              n->task->description);
+      break;
+
+    case 2:
+      sprintf(taskInfo,
+              "[ID: %d | Priority: %d | Assigned to: %s]\n%s",
+              n->task->id,
+              n->task->priority,
+              n->task->person,
+              n->task->description);
+      break;
+
+    case 3:
+      sprintf(taskInfo,
+              "[ID: %d | Priority: %d | Completed by: %s]\n%s",
+              n->task->id,
+              n->task->priority,
+              n->task->person,
+              n->task->description);
+      break;
+
+    default:break;
+  }
+
   //printDate(n->task->dateCreated);
   //printf("\n\n");
 
