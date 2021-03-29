@@ -1,5 +1,3 @@
-#include <assert.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -680,24 +678,28 @@ void saveTasks(tasklist *todo, tasklist *doing, tasklist *done) {
 }
 
 long dateToLong(int year, int month, int day) {
-  struct tm t;
-  time_t time;
-  t.tm_year = year - 1900;
-  t.tm_mon = month;
-  t.tm_mday = day;
-  t.tm_hour = 0;
-  t.tm_min = 0;
-  t.tm_sec = 0;
-  t.tm_isdst = 0;
-  time = mktime(&t);
-  return (long) time;
+  time_t result;
+  time_t rawtime;
+
+  struct tm *timeinfo;
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+  timeinfo->tm_year = year - 1900;
+  timeinfo->tm_mon = month - 1;
+  timeinfo->tm_mday = day;
+
+  result = mktime(timeinfo);
+  return (long) result;
 }
 
-void printDate(long time) {
-  char date[1024];
-  struct tm t = *localtime(&time);
-  strftime(date, sizeof(date), "%a %Y-%m-%d %H:%M:%S", &t);
-  printf("%s", date);
+char *printDate(long time) {
+  char *date = (char *) malloc(120 * sizeof(char));
+  time_t rawtime = time;
+
+  struct tm *timeinfo = localtime(&rawtime);
+  strftime(date, 120, "%x", timeinfo);
+
+  return date;
 }
 
 char *listPrint(tasklist *l, int i, int option) {
@@ -726,10 +728,11 @@ char *listPrint(tasklist *l, int i, int option) {
 
     case 2:
       sprintf(taskInfo,
-              "[ID: %d | Priority: %d | Assigned to: %s]\n%s",
+              "[ID: %d | Priority: %d]\n[Assigned to: %s | Deadline: %s]\n%s",
               n->task->id,
               n->task->priority,
               n->task->person,
+              printDate(n->task->deadline),
               n->task->description);
       break;
 
@@ -745,71 +748,6 @@ char *listPrint(tasklist *l, int i, int option) {
     default:break;
   }
 
-  //printDate(n->task->dateCreated);
-  //printf("\n\n");
-
   return taskInfo;
-}
-
-void listPrintDoing(tasklist *l) {
-  if (listIsEmpty(l)) {
-    return;
-  }
-  node *n = l->first;
-  puts("\nWorking on:");
-  while (n->next != NULL) {
-    printf("\tID: %d | Priority: %d\n\t%s\n\tAssigned to: %s\n\tDate started: ",
-           n->task->id,
-           n->task->priority,
-           n->task->description,
-           n->task->person);
-    printDate(n->task->dateCreated);
-    printf("\n\tDeadline: ");
-    printDate(n->task->deadline);
-    printf("\n\n");
-    n = n->next;
-  }
-  printf("\tID: %d | Priority: %d\n\t%s\n\tAssigned to: %s\n\tDate started: ",
-         n->task->id,
-         n->task->priority,
-         n->task->description,
-         n->task->person);
-  printDate(n->task->dateCreated);
-  printf("\n\tDeadline: ");
-  printDate(n->task->deadline);
-  printf("\n\n\n");
-}
-
-void listPrintDone(tasklist *l) {
-  if (listIsEmpty(l)) {
-    return;
-  }
-  node *n = l->first;
-  puts("\nTasks Completed:");
-  while (n->next != NULL) {
-    printf("\tID: %d | Priority: %d\n\t%s\n\tCompleted by: %s\n\tDate started: ",
-           n->task->id,
-           n->task->priority,
-           n->task->description,
-           n->task->person);
-    printDate(n->task->dateCreated);
-    printf("\n\tDeadline: ");
-    printDate(n->task->deadline);
-    printf("\n\tDate concluded: ");
-    printDate(n->task->dateConcluded);
-    printf("\n\n");
-    n = n->next;
-  }
-  printf("\tID: %d | Priority: %d\n\t%s\n\tCompleted by: %s\n\tDate started: ",
-         n->task->id,
-         n->task->priority,
-         n->task->description,
-         n->task->person);
-  printDate(n->task->dateCreated);
-  printf("\n\tDeadline: ");
-  printDate(n->task->deadline);
-  printf("\n\tDate concluded: ");
-  printDate(n->task->dateConcluded);
-  printf("\n\n\n");
 }
 

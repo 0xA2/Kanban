@@ -3,11 +3,47 @@
 #define MAX_TASKS 10
 
 board_t *board;
+const int MAX_VALID_YR = 2038;
+const int MIN_VALID_YR = 1970;
+
 void initCore(board_t *board_init) {
   board = board_init;
 }
 
-// --- Read Functions --- //
+//////////////////////////////////////////////////////
+
+/* UTILS */
+
+int isLeap(int year) {
+  return (((year % 4 == 0) &&
+      (year % 100 != 0)) ||
+      (year % 400 == 0));
+}
+
+int isValidDate(int d, int m, int y) {
+
+  if (y > MAX_VALID_YR ||
+      y < MIN_VALID_YR)
+    return 0;
+  if (m < 1 || m > 12)
+    return 0;
+  if (d < 1 || d > 31)
+    return 0;
+
+  if (m == 2) {
+    if (isLeap(y))
+      return (d <= 29);
+    else
+      return (d <= 28);
+  }
+
+  if (m == 4 || m == 6 ||
+      m == 9 || m == 11)
+    return (d <= 30);
+
+  return 1;
+}
+
 int readInt(int *op, char *buffer) {
 
   // Function to read user input and use it as an integer
@@ -33,7 +69,9 @@ int readInt(int *op, char *buffer) {
   }
 }
 
-// --- Functions for core operations --- //
+//////////////////////////////////////////////////////
+
+/* CORE FUNCTIONALITY */
 
 int getCurID() {
   int lastID = listSize(board->todo) + listSize(board->doing) + listSize(board->done);
@@ -54,8 +92,7 @@ void addTask(int priority, char *description) {
   }
 }
 
-/*
-int workOnTask(int id, int day, int month, int year, char *person) {
+int workOnTask(int id, int d, int m, int y, char *worker) {
 
   // Check if MAX_TASKS has been reached
   if (board->doing->size >= MAX_TASKS) {
@@ -67,138 +104,27 @@ int workOnTask(int id, int day, int month, int year, char *person) {
     return 0;
   }
 
-  char buffer[100];
-  struct tm date;
-  memset(&date, 0, sizeof(date));
-  date.tm_mday = day;
-  date.tm_mon = month;
-  date.tm_mon = year;
-
-  if (sprintf(buffer, "%d/%d/%d", date.tm_mday, date.tm_mon, date.tm_year) == 3)
-  {
-    const char *format;
-
-    format = "Dated %A %dth of %B, %Y";
-    if (strftime(buffer, sizeof(buffer), format, &date) > sizeof(buffer))
-      fprintf(stderr, "there was a problem converting the string\n");
-    else
-      fprintf(stdout, "%s\n", buffer);
-  }
-
-  // Ask user for date
-  puts("\nSet deadline:");
-  printf("Year > ");
-  int year;
-  readInt(&year);
-  if (year < 1970 || year >= 2038) {
-    puts("Invalid date");
-    exit(1);
-  }
-  printf("Month > ");
-  int month;
-  readInt(&month);
-  if (month < 1 || month > 12) {
-    puts("Invalid date");
-    exit(1);
-  }
-  printf("Day > ");
-  int day;
-  readInt(&day);
-  switch (month) {
-    case 1:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 2:
-      if (day < 1 || day > 29) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 3:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 4:
-      if (day < 1 || day > 30) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 5:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 6:
-      if (day < 1 || day > 30) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 7:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 8:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 9:
-      if (day < 1 || day > 30) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 10:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 11:
-      if (day < 1 || day > 30) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-    case 12:
-      if (day < 1 || day > 31) {
-        puts("Invalid date");
-        exit(1);
-      }
-      break;
-  }
-
   card *toMove;
 
   // Remove task from todo
   if ((toMove = listRemoveTaskByID(id, board->todo)) != NULL) {
 
     // Set deadline
-    cardSetDeadline(toMove, dateToLong(year, month - 1, day));
+    cardSetDeadline(toMove, dateToLong(y, m, d));
 
-    // Ask user who to assign the task to
-    printf("Assign task to > ");
-    char *worker = (char *) malloc(1024);
-    readString(worker);
+    // Set person working
     cardAssign(toMove, worker);
 
     // Add task to doing
     listAddByPriority(toMove, board->doing);
+
+    return 1;
   }
 
+  return 0;
 }
 
+/*
 void reassignTask(int id) {
   // Ask user for task id
   printf("Task id > ");

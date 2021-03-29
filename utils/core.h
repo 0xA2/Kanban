@@ -18,20 +18,8 @@ typedef struct board {
 void initCore(board_t *board_init);
 
 int readInt(int *, char *);
-void readString(char *);
-
-/*
-void printBoard();
-void printMenu(char *title, char *options[], int count, int ident);
-*/
-
 void addTask(int, char *);
 int workOnTask(int, int, int, int, char *);
-void reassignTask();
-// void closeTask(int id);
-void reopenTask();
-void tasksFromWorker();
-void tasksByDate();
 #define KANBAN_BOARD_UTILS_CORE_H_
 
 #endif //KANBAN_BOARD_UTILS_CORE_H_

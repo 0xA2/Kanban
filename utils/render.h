@@ -2,6 +2,7 @@
 #include <form.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "core.h"
 
