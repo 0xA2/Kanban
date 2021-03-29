@@ -83,7 +83,7 @@ int getCurID() {
 }
 
 void addTask(int priority, char *description) {
-  card *toAdd;
+  card *toAdd = (card *) malloc(sizeof(card));
   int id = getCurID();
 
   if ((toAdd = cardNew(id, priority, time(NULL), description)) != NULL) {
@@ -104,108 +104,75 @@ int workOnTask(int id, int d, int m, int y, char *worker) {
     return 0;
   }
 
-  card *toMove;
+  card *toMove = (card *) malloc(sizeof(card));
 
   // Remove task from todo
   if ((toMove = listRemoveTaskByID(id, board->todo)) != NULL) {
+    long rawtime = dateToLong(y, m, d);
 
     // Set deadline
-    cardSetDeadline(toMove, dateToLong(y, m, d));
+    cardSetDeadline(toMove, rawtime);
 
     // Set person working
     cardAssign(toMove, worker);
 
     // Add task to doing
     listAddByPriority(toMove, board->doing);
-
     return 1;
   }
 
   return 0;
 }
 
-/*
-void reassignTask(int id) {
-  // Ask user for task id
-  printf("Task id > ");
-
-  // Chech if task exists in todo
-  if (!listTaskExists(id, board->doing)) {
-    puts("\n--------------------------");
-    puts("No task found for given id");
-    puts("--------------------------\n");
-    getchar();
-    return;
-  }
-
-  card *toChange;
-  if ((toChange = listGetTaskByID(id, board->doing)) != NULL) {
-
-    // Ask user who to assign the task to
-    printf("Assign task to > ");
-    char *worker = (char *) malloc(1024);
-    readString(worker);
-    cardAssign(toChange, worker);
-  }
-}
-
-void closeTask(int id) {
-
-  // Ask user for task id
-  printf("Task id > ");
-
-  // Chech if task exists in todo
-  if (!listTaskExists(id, board->doing)) {
-    puts("\n--------------------------");
-    puts("No task found for given id");
-    puts("--------------------------\n");
-    getchar();
-    return;
-  }
-
-  card *toMove;
+int closeTask(int id) {
+  card *toMove = (card *) malloc(sizeof(card));
 
   // Remove task from doing
   if ((toMove = listRemoveTaskByID(id, board->doing)) != NULL) {
-
     // Set time of conclusion
     cardSetDateConcluded(toMove, time(NULL));
-
     // Add task to doing
     listAddByConclusion(toMove, board->done);
+    return 1;
   }
-
+  return 0;
 }
 
-void reopenTask(int id) {
-
-  // Ask user for task id
-  printf("Task id > ");
-
-  // Chech if task exists in done
-  if (!listGetTaskByID(id, board->done)) {
-    puts("\n--------------------------");
-    puts("No task found for given id");
-    puts("--------------------------\n");
-    getchar();
-    return;
+int reassignTask(int id, char *worker) {
+  // Chech if task exists in todo
+  if (!listTaskExists(id, board->doing)) {
+    return 0;
   }
 
-  card *toMove;
+  card *toChange = (card *) malloc(sizeof(card));
+  if ((toChange = listGetTaskByID(id, board->doing)) != NULL) {
+    cardAssign(toChange, worker);
+    return 1;
+  }
+  return 0;
+}
 
+int reopenTask(int id) {
+  // Chech if task exists in done
+  if (!listGetTaskByID(id, board->done)) {
+    return 0;
+  }
+
+  card *toMove = (card *) malloc(sizeof(card));
   // Remove task from doing
   if ((toMove = listRemoveTaskByID(id, board->done)) != NULL) {
-
     // Reset task
     cardSetDeadline(toMove, 0);
     cardSetDateConcluded(toMove, 0);
     toMove->person = NULL;
-
     // Add task to done
     listAddByPriority(toMove, board->todo);
+    return 1;
   }
-
+  return 0;
 }
+
+/*
 
 void tasksFromWorker() {
 

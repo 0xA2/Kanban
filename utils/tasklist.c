@@ -678,18 +678,17 @@ void saveTasks(tasklist *todo, tasklist *doing, tasklist *done) {
 }
 
 long dateToLong(int year, int month, int day) {
-  time_t result;
-  time_t rawtime;
-
-  struct tm *timeinfo;
-  time(&rawtime);
-  timeinfo = localtime(&rawtime);
-  timeinfo->tm_year = year - 1900;
-  timeinfo->tm_mon = month - 1;
-  timeinfo->tm_mday = day;
-
-  result = mktime(timeinfo);
-  return (long) result;
+  struct tm t;
+  time_t time;
+  t.tm_year = year - 1900;
+  t.tm_mon = month - 1;
+  t.tm_mday = day;
+  t.tm_hour = 0;
+  t.tm_min = 0;
+  t.tm_sec = 0;
+  t.tm_isdst = 0;
+  time = mktime(&t);
+  return (long) time;
 }
 
 char *printDate(long time) {
@@ -703,12 +702,10 @@ char *printDate(long time) {
 }
 
 char *listPrint(tasklist *l, int i, int option) {
-  if (listIsEmpty(l)) {
-    return NULL;
-  }
+  if (listIsEmpty(l)) { return NULL; }
 
   node *n = l->first;
-  char *taskInfo = (char *) malloc(1024);
+  char *taskInfo = (char *) malloc(80 * sizeof(char));
   int cur = 0;
 
   while (n->next != NULL) {

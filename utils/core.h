@@ -20,6 +20,9 @@ void initCore(board_t *board_init);
 int readInt(int *, char *);
 void addTask(int, char *);
 int workOnTask(int, int, int, int, char *);
+int closeTask(int);
+int reassignTask(int, char *);
+int reopenTask(int);
 #define KANBAN_BOARD_UTILS_CORE_H_
 
 #endif //KANBAN_BOARD_UTILS_CORE_H_
