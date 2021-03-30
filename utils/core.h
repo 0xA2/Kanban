@@ -7,7 +7,7 @@
 #include <limits.h>
 #include <time.h>
 
-#include "tasklist.h"
+#include "./tasklist.h"
 
 #ifndef KANBAN_BOARD_UTILS_CORE_H_
 typedef struct board {

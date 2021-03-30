@@ -681,13 +681,14 @@ long dateToLong(int year, int month, int day) {
   struct tm t;
   time_t t_of_day;
 
-  t.tm_year = year - 1900;  // Year - 1900
+  t.tm_year = year - 1900;    // Year - 1900
   t.tm_mon = month;           // Month, where 0 = jan
-  t.tm_mday = day;          // Day of the month
+  t.tm_mday = day;            // Day of the month
   t.tm_hour = 0;
   t.tm_min = 0;
   t.tm_sec = 1;
-  t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
+  t.tm_isdst = -1;            // Is DST on? 1 = yes, 0 = no, -1 = unknown
+
   t_of_day = mktime(&t);
 
   return (long) t_of_day;

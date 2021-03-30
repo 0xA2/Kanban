@@ -2,7 +2,6 @@
 
 //////////////////////////////////////////////////////
 const int MAX_VALID_YR = 2038;
-const int MIN_VALID_YR = 1970;
 //////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////
@@ -10,20 +9,23 @@ const int MIN_VALID_YR = 1970;
 /* UTILS */
 
 int isLeap(int year) {
-  return (((year % 4 == 0) &&
-      (year % 100 != 0)) ||
-      (year % 400 == 0));
+  return (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0));
 }
 
 int isValidDate(int d, int m, int y) {
+  time_t rawtime;
+  rawtime = time(NULL);
 
-  if (y > MAX_VALID_YR || y < MIN_VALID_YR)
+  struct tm *now;
+  now = localtime(&rawtime);
+
+  if (y > MAX_VALID_YR || y < now->tm_year)
     return 0;
 
-  if (m < 1 || m > 12)
+  if (m < 1 || m > 12 || (y == now->tm_year && m < now->tm_mon))
     return 0;
 
-  if (d < 1 || d > 31)
+  if (d < 1 || d > 31 || ((y == now->tm_year && m == now->tm_mon) && d < now->tm_mday))
     return 0;
 
   if (m == 2) {
@@ -80,6 +82,11 @@ char *trimWhitespaces(char *str) {
   return str;
 }
 
+void freeFormFields(FORM *form, FIELD **fields) {
+  for (int i = 0; fields[i] != NULL; ++i) { free_field(fields[i]); }
+  free_form(form);
+}
+
 FIELD *newFieldPrompt(int pos, char *prompt) {
   FIELD *newField;
   newField = new_field(1, 25, pos * 2, 0, 0, 0);
@@ -130,17 +137,17 @@ FIELD *newFieldInputDate(int pos) {
 
 /* BOARD STUFF */
 
-void title(WINDOW **win, char *title) {
-  int startx = (getmaxx(*win) - (int) strlen(title)) / 2;
-  wmove(*win, 0, startx);
-  wattron(*win, A_REVERSE);
-  waddstr(*win, title);
-  wattroff(*win, A_REVERSE);
-  wrefresh(*win);
+void title(WINDOW *win, char *title) {
+  int startx = (getmaxx(win) - (int) strlen(title)) / 2;
+  wmove(win, 0, startx);
+  wattron(win, A_REVERSE);
+  waddstr(win, title);
+  wattroff(win, A_REVERSE);
+  wrefresh(win);
 }
 
 void printList(WINDOW *win, tasklist *list, int option) {
-  char *string = (char *) malloc(80 * sizeof(char));
+  char *string;
   wmove(win, 0, 0);
 
   whline(win, ACS_HLINE, getmaxx(win));
@@ -151,84 +158,4 @@ void printList(WINDOW *win, tasklist *list, int option) {
     wmove(win, getcury(win) + 1, 0);
     whline(win, ACS_HLINE, getmaxx(win));
   }
-
-  free(string);
-}
-
-//////////////////////////////////////////////////////
-
-/* FORM STUFF */
-
-void driver(FORM ***form, WINDOW **fieldsWin) {
-  FIELD **fields = form_fields(**form);
-
-  int ch;
-  while (1) {
-    if (current_field(**form) == fields[field_count(**form) - 1]) {
-      set_field_back(fields[field_count(**form) - 1], A_REVERSE);
-    } else {
-      set_field_back(fields[field_count(**form) - 1], A_BOLD);
-    }
-
-    ch = getch();
-
-    switch (ch) {
-      case KEY_LEFT:form_driver(**form, REQ_PREV_CHAR);
-        break;
-
-      case KEY_RIGHT:form_driver(**form, REQ_NEXT_CHAR);
-        break;
-
-      case KEY_DOWN:form_driver(**form, REQ_NEXT_FIELD);
-        form_driver(**form, REQ_END_LINE);
-        break;
-
-      case KEY_UP:form_driver(**form, REQ_PREV_FIELD);
-        form_driver(**form, REQ_END_LINE);
-        break;
-
-      case KEY_BACKSPACE:form_driver(**form, REQ_DEL_PREV);
-        break;
-
-      case 10:
-        if (current_field(**form) == fields[field_count(**form) - 1]) {
-          form_driver(**form, REQ_VALIDATION);
-          return;
-        } else {
-          form_driver(**form, REQ_NEXT_FIELD);
-        }
-        break;
-
-      default:form_driver(**form, ch);
-        break;
-    }
-
-    wrefresh(*fieldsWin);
-  }
-}
-
-void renderForm(FORM **form, FIELD ***fields) {
-  *form = new_form(*fields);
-  assert(form != NULL);
-
-  WINDOW *fieldsWin = (WINDOW *) malloc(sizeof(WINDOW *));
-  assert(fieldsWin != NULL);
-
-  WINDOW *formWin = derwin(stdscr, getmaxy(stdscr) - 4, getmaxx(stdscr) - 4, getmaxy(stdscr) - 2, getmaxx(stdscr) - 2);
-  fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
-  box(formWin, 0, 0);
-
-  set_form_win(*form, formWin);
-  set_form_sub(*form, derwin(fieldsWin, getmaxy(fieldsWin), getmaxx(fieldsWin), 0, 0));
-  post_form(*form);
-  pos_form_cursor(*form);
-
-  refresh();
-  wrefresh(formWin);
-  wrefresh(fieldsWin);
-
-  driver(&form, &fieldsWin);
-
-  free(fieldsWin);
-  free(formWin);
 }
