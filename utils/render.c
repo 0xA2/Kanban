@@ -3,16 +3,6 @@
 //////////////////////////////////////////////////////
 board_t *boardList;
 
-WINDOW *menuWin;
-WINDOW *formWin;
-WINDOW *fieldsWin;
-WINDOW *todoBoard;
-WINDOW *todoBoardIn;
-WINDOW *doingBoard;
-WINDOW *doingBoardIn;
-WINDOW *doneBoard;
-WINDOW *doneBoardIn;
-
 char *choices[] = {
     "Add task",
     "Start task",
@@ -25,301 +15,29 @@ char *choices[] = {
 int n_choices = sizeof(choices) / sizeof(char *);
 //////////////////////////////////////////////////////
 
-/* UTILS */
-
-char *trimWhitespaces(char *str) {
-  char *end;
-
-  // Trim leading space
-  while (isspace((unsigned char) *str)) str++;
-
-  // All spaces?
-  if (*str == 0)
-    return str;
-
-  // Trim trailing space
-  end = str + strlen(str) - 1;
-  while (end > str && isspace((unsigned char) *end)) end--;
-
-  // Write new null terminator character
-  end[1] = '\0';
-
-  return str;
-}
-
-void title(WINDOW *win, char *title) {
-  int startx = (getmaxx(win) - (int) strlen(title)) / 2;
-  wmove(win, 0, startx);
-  wattron(win, A_REVERSE);
-  waddstr(win, title);
-  wattroff(win, A_REVERSE);
-  wrefresh(win);
-}
-
-FIELD *newFieldPrompt(int pos, char *prompt) {
-  FIELD *newField;
-  newField = new_field(1, 25, pos * 2, 0, 0, 0);
-  set_field_buffer(newField, 0, prompt);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
-
-  return newField;
-}
-
-FIELD *newFieldInputInt(int pos, int min, int max) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_NUMERIC, min, max);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
-FIELD *newFieldInputStr(int pos) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_ALPHA, 1);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
-FIELD *newFieldInputDate(int pos) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_REGEXP, "^\\d{1,2}\\/\\d{1,2}\\/\\d{4}$");
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
-//////////////////////////////////////////////////////
-
-/* PRINT STUFF */
-
-void nuke() {
-  // Free menuwin
-  delwin(menuWin);
-  // Free board
-  delwin(todoBoard);
-  delwin(todoBoardIn);
-  delwin(doingBoard);
-  delwin(doingBoardIn);
-  delwin(doneBoard);
-  delwin(doneBoardIn);
-  // Free form
-  delwin(formWin);
-  delwin(fieldsWin);
-
-}
-
-void printList(WINDOW *win, tasklist *list, int option) {
-  char *string = (char *) malloc(80 * sizeof(char));
-  wmove(win, 0, 0);
-
-  whline(win, ACS_HLINE, getmaxx(win));
-  for (int i = 0; i < listSize(list); ++i) {
-    string = listPrint(list, i, option);
-    wmove(win, getcury(win) + 1, 0);
-    waddstr(win, string);
-    wmove(win, getcury(win) + 1, 0);
-    whline(win, ACS_HLINE, getmaxx(win));
-    free(string);
-  }
-}
-
-void renderMenu(int highlight) {
-  int x, y, i, pad;
-
-  // Upper left corner of menu
-  int startx = 0;
-  int starty = getmaxy(stdscr) - 3;
-
-  // Menu dimensions
-  int width = getmaxx(stdscr);
-  int height = 3;
-
-  // Selection Menu Dimensions
-  menuWin = newwin(height, width, starty, startx);
-  keypad(menuWin, TRUE);
-
-  // Initial values, initial "padding"
-  x = 2;
-  y = 1;
-
-  box(menuWin, 0, 0);
-
-  // Get padding
-  int effectiveSize = 0;
-
-  for (int j = 0; j < n_choices; ++j) {
-    effectiveSize += (int) strlen(choices[j]);
-  }
-  pad = (getmaxx(menuWin) - effectiveSize) / n_choices;
-
-  // Print stuff
-  for (i = 0; i < n_choices; ++i) {
-    if (highlight == i + 1) {
-      wattron(menuWin, A_REVERSE);
-      mvwprintw(menuWin, y, x, "%s", choices[i]);
-      wattroff(menuWin, A_REVERSE);
-    } else
-      mvwprintw(menuWin, y, x, "%s", choices[i]);
-    x += pad + (int) strlen(choices[i]);
-  }
-
-  wrefresh(menuWin);
-}
-
-void initBoard() {
-  int startx = 0;
-  int height = 0;
-  int width = 0;
-
-  width = getmaxx(stdscr) / 3;
-  height = getmaxy(stdscr) - 3;
-
-  // Boxes inside to prevent text from overflowing
-  int inStartx = 2;
-  int inWidth = (getmaxx(stdscr) / 3) - 4;
-  int inHeight = (getmaxy(stdscr) - 3) - 4;
-
-  todoBoard = newwin(height, width, 0, startx);
-  todoBoardIn = newwin(inHeight, inWidth, 2, inStartx);
-  box(todoBoard, 0, 0);
-
-  inStartx += width;
-  startx += width;
-  doingBoard = newwin(height, width, 0, startx);
-  doingBoardIn = newwin(inHeight, inWidth, 2, inStartx);
-  box(doingBoard, 0, 0);
-
-  startx += width;
-  inStartx += width;
-  doneBoard = newwin(height, width, 0, startx);
-  doneBoardIn = newwin(inHeight, inWidth, 2, inStartx);
-  box(doneBoard, 0, 0);
-}
-
-void refreshBoard() {
-  wrefresh(todoBoard);
-  wrefresh(todoBoardIn);
-  wrefresh(doingBoard);
-  wrefresh(doingBoardIn);
-  wrefresh(doneBoard);
-  wrefresh(doneBoardIn);
-}
-
-void renderBoard() {
-  initBoard();
-
-  // Print todo
-  title(todoBoard, "| TODO |");
-  printList(todoBoardIn, boardList->todo, 1);
-
-  // Print doing
-  title(doingBoard, "| DOING |");
-  printList(doingBoardIn, boardList->doing, 2);
-
-  // Print done
-  title(doneBoard, "| DONE |");
-  printList(doneBoardIn, boardList->done, 3);
-
-  refreshBoard();
-}
-
-void driver(FORM **form) {
-  pos_form_cursor(*form);
-  form_driver(*form, REQ_PREV_FIELD);
-  form_driver(*form, REQ_NEXT_FIELD);
-
-  int ch;
-  while (1) {
-    ch = getch();
-
-    // KEY_ENTER doesn't work, this works
-    if (ch == 10) {
-      break;
-    }
-
-    switch (ch) {
-      case KEY_LEFT:form_driver(*form, REQ_PREV_CHAR);
-        break;
-
-      case KEY_RIGHT:form_driver(*form, REQ_NEXT_CHAR);
-        break;
-
-      case KEY_DOWN:form_driver(*form, REQ_NEXT_FIELD);
-        form_driver(*form, REQ_END_LINE);
-        break;
-
-      case KEY_UP:form_driver(*form, REQ_PREV_FIELD);
-        form_driver(*form, REQ_END_LINE);
-        break;
-
-      case KEY_BACKSPACE:form_driver(*form, REQ_DEL_PREV);
-        break;
-
-      default:form_driver(*form, ch);
-        break;
-    }
-
-    wrefresh(fieldsWin);
-  }
-
-  // All good to continue
-  form_driver(*form, REQ_LAST_FIELD);
-  form_driver(*form, REQ_VALIDATION);
-}
-
-void initForm(FORM **form, FIELD **fields) {
-  *form = new_form(fields);
-  assert(form != NULL);
-}
-
-void renderForm(FORM **form) {
-  formWin = newwin(24, 80, 0, 0);
-  assert(formWin != NULL);
-  fieldsWin = derwin(formWin, 20, 78, 3, 1);
-  assert(fieldsWin != NULL);
-
-  mvwprintw(formWin,
-            1,
-            2,
-            "Arrows to select fields, ENTER to confirm all. You may only proceed to next field if the current is correct.");
-  set_form_win(*form, fieldsWin);
-  box(formWin, 0, 0);
-  set_form_sub(*form, derwin(fieldsWin, 18, 76, 1, 1));
-  box(fieldsWin, 0, 0);
-
-  post_form(*form);
-  refresh();
-  wrefresh(formWin);
-  wrefresh(fieldsWin);
-
-  driver(form);
-}
-
 //////////////////////////////////////////////////////
 
 /* MAIN UI LOOP */
 
 void addChoice() {
-  FIELD **fields = (FIELD **) malloc(4 * sizeof(FIELD));
-  FORM *form = (FORM *) malloc(sizeof(FORM));
+  FIELD **fields = (FIELD **) malloc(5 * sizeof(FIELD));
+  FORM *form = (FORM *) malloc(10 * sizeof(FORM));
 
   fields[0] = newFieldPrompt(0, "Priority [1-10]:");
   fields[1] = newFieldInputInt(0, 0, 10);
   fields[2] = newFieldPrompt(1, "Description:");
   fields[3] = newFieldInputStr(1);
-  assert(fields != NULL);
+  fields[4] = newFieldButton(2, "[ OK ]");
 
-  initForm(&form, fields);
+  for (int i = 0; i < 5; ++i) {
+    assert(fields[i] != NULL);
+  }
 
-  // Render it
-  renderForm(&form);
+  renderForm(&form, &fields);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    addChoice();
+  }
 
   // Reading priority
   char *priorityBuffer = strtok(field_buffer(form->field[1], 0), " ");
@@ -334,14 +52,11 @@ void addChoice() {
   // Adding task to list
   addTask(priorityInt, descriptionBuffer);
 
-  free(fields);
-  free(form);
-
   choiceLoop();
 }
 
 void startChoice() {
-  FIELD **fields = (FIELD **) malloc(6 * sizeof(FIELD));
+  FIELD **fields = (FIELD **) malloc(7 * sizeof(FIELD));
   FORM *form = (FORM *) malloc(sizeof(FORM));
   fields[0] = newFieldPrompt(0, "Task ID:");
   fields[1] = newFieldInputInt(0, 0, 10);
@@ -349,12 +64,17 @@ void startChoice() {
   fields[3] = newFieldInputStr(1);
   fields[4] = newFieldPrompt(2, "Deadline (dd/mm/year):");
   fields[5] = newFieldInputDate(2);
-  assert(fields != NULL);
+  fields[6] = newFieldButton(3, "[ OK ]");
 
-  initForm(&form, fields);
+  for (int i = 0; i < 7; ++i) {
+    assert(fields[i] != NULL);
+  }
 
-  // Render it
-  renderForm(&form);
+  renderForm(&form, &fields);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    startChoice();
+  }
 
   // Reading ID
   char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
@@ -371,35 +91,38 @@ void startChoice() {
   strcpy(deadlineBuffer, field_buffer(form->field[5], 0));
   trimWhitespaces(deadlineBuffer);
 
-  int day, month, year;
+  int day, e1, month, e2, year, e3;
   char *dayBuffer = strtok(deadlineBuffer, "/");
-  readInt(&day, dayBuffer);
   char *monthBuffer = strtok(NULL, "/");
-  readInt(&month, monthBuffer);
   char *yearBuffer = strtok(NULL, "/");
-  readInt(&year, yearBuffer);
 
-  // Adding task to list
-  workOnTask(idInt, day, month, year, personBuffer);
+  // Checking errors
+  e1 = readInt(&day, dayBuffer);
+  e2 = readInt(&month, monthBuffer);
+  e3 = readInt(&year, yearBuffer);
 
-  free(fields);
-  free(form);
-
-  choiceLoop();
+  if (!(e1 || e2 || e3) || isValidDate(day, month, year)) {
+    startChoice();
+  } else {
+    // Adding task to list
+    workOnTask(idInt, day, month - 1, year, personBuffer);
+    choiceLoop();
+  }
 }
 
 void closeChoice() {
-  FIELD **fields = (FIELD **) malloc(2 * sizeof(FIELD));
+  FIELD **fields = (FIELD **) malloc(3 * sizeof(FIELD));
   FORM *form = (FORM *) malloc(sizeof(FORM));
 
   fields[0] = newFieldPrompt(0, "Task ID:");
   fields[1] = newFieldInputInt(0, 0, 10);
-  assert(fields != NULL);
+  fields[2] = newFieldButton(1, "[ OK ]");
 
-  initForm(&form, fields);
+  for (int i = 0; i < 3; ++i) {
+    assert(fields[i] != NULL);
+  }
 
-  // Render it
-  renderForm(&form);
+  renderForm(&form, &fields);
 
   // Reading ID
   char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
@@ -409,26 +132,24 @@ void closeChoice() {
   // Adding task to done
   closeTask(idInt);
 
-  free(fields);
-  free(form);
-
   choiceLoop();
 }
 
 void reAssign() {
-  FIELD **fields = (FIELD **) malloc(4 * sizeof(FIELD));
+  FIELD **fields = (FIELD **) malloc(5 * sizeof(FIELD));
   FORM *form = (FORM *) malloc(sizeof(FORM));
 
   fields[0] = newFieldPrompt(0, "Task ID:");
   fields[1] = newFieldInputInt(0, 0, 10);
   fields[2] = newFieldPrompt(1, "Assign to:");
   fields[3] = newFieldInputStr(1);
-  assert(fields != NULL);
+  fields[4] = newFieldButton(2, "[ OK ]");
 
-  initForm(&form, fields);
+  for (int i = 0; i < 5; ++i) {
+    assert(fields[i] != NULL);
+  }
 
-  // Render it
-  renderForm(&form);
+  renderForm(&form, &fields);
 
   // Reading ID
   char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
@@ -443,24 +164,22 @@ void reAssign() {
   // Adding task to done
   reassignTask(idInt, personBuffer);
 
-  free(fields);
-  free(form);
-
   choiceLoop();
 }
 
 void reOpen() {
-  FIELD **fields = (FIELD **) malloc(2 * sizeof(FIELD));
+  FIELD **fields = (FIELD **) malloc(3 * sizeof(FIELD));
   FORM *form = (FORM *) malloc(sizeof(FORM));
 
   fields[0] = newFieldPrompt(0, "Task ID:");
   fields[1] = newFieldInputInt(0, 0, 10);
-  assert(fields != NULL);
+  fields[2] = newFieldButton(1, "[ OK ]");
 
-  initForm(&form, fields);
+  for (int i = 0; i < 3; ++i) {
+    assert(fields[i] != NULL);
+  }
 
-  // Render it
-  renderForm(&form);
+  renderForm(&form, &fields);
 
   // Reading ID
   char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
@@ -469,9 +188,6 @@ void reOpen() {
 
   // Adding task to done
   reopenTask(idInt);
-
-  free(fields);
-  free(form);
 
   choiceLoop();
 }
@@ -505,19 +221,20 @@ void choiceLoop() {
   int startx = getmaxx(stdscr);
   int starty = getmaxy(stdscr);
 
-  nuke();
   renderBoard();
   renderMenu(highlight);
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
     if (is_term_resized(starty, startx)) {
-      nuke();
+      startx = getmaxx(stdscr);
+      starty = getmaxy(stdscr);
+
       renderBoard();
       renderMenu(highlight);
     }
 
-    c = wgetch(menuWin);
+    c = getch();
     switch (c) {
       case KEY_LEFT:
         if (highlight == 1) {
@@ -554,6 +271,119 @@ void choiceLoop() {
   getNextMenu(choice);
 }
 
+//////////////////////////////////////////////////////
+
+/* RENDER */
+
+void renderMenu(int highlight) {
+  refresh();
+  WINDOW **menuWin = (WINDOW **) malloc(sizeof(WINDOW *));
+  int x, y, i, pad;
+
+  // Upper left corner of menu
+  int startx = 0;
+  int starty = getmaxy(stdscr) - 3;
+
+  // Menu dimensions
+  int width = getmaxx(stdscr);
+  int height = 3;
+
+  // Selection Menu Dimensions
+  *menuWin = newwin(height, width, starty, startx);
+  keypad(*menuWin, TRUE);
+
+  // Initial values, initial "padding"
+  x = 2;
+  y = 1;
+
+  box(*menuWin, 0, 0);
+
+  // Get padding
+  int effectiveSize = 0;
+
+  for (int j = 0; j < n_choices; ++j) {
+    effectiveSize += (int) strlen(choices[j]);
+  }
+  pad = (getmaxx(*menuWin) - effectiveSize) / n_choices;
+
+  // Print stuff
+  for (i = 0; i < n_choices; ++i) {
+    if (highlight == i + 1) {
+      wattron(*menuWin, A_REVERSE);
+      mvwaddstr(*menuWin, y, x, choices[i]);
+      wattroff(*menuWin, A_REVERSE);
+    } else
+      mvwaddstr(*menuWin, y, x, choices[i]);
+    x += pad + (int) strlen(choices[i]);
+  }
+  assert(menuWin != NULL);
+
+  wrefresh(*menuWin);
+}
+
+void renderBoard() {
+  refresh();
+  int h, w, bh, bw;
+  h = getmaxy(stdscr) - 3;
+  w = getmaxx(stdscr) / 3;
+
+  WINDOW **board = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **todoBoard = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **todo = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **doingBoard = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **doing = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **doneBoard = (WINDOW **) malloc(sizeof(WINDOW *));
+  WINDOW **done = (WINDOW **) malloc(sizeof(WINDOW *));
+
+  // Portion of screen occupied by the board
+  *board = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 0, 0);
+
+  // Each list box
+  *todoBoard = derwin(*board, h, w, 0, 0);
+  *doingBoard = derwin(*board, h, w, 0, w);
+  *doneBoard = derwin(*board, h, w, 0, 2 * w);
+
+  box(*todoBoard, 0, 0);
+  box(*doingBoard, 0, 0);
+  box(*doneBoard, 0, 0);
+
+  // Boxes inside the previous ones to prevent text from overflowing
+  // - Getting the height and width
+  // - Since there are 3 windows, one of them might be smaller
+  // - We have to make this check for every. single. one.
+  bh = (getmaxy(*todoBoard)) - 4;
+  bw = (getmaxx(*todoBoard)) - 4;
+  *todo = derwin(*todoBoard, bh, bw, 2, 2);
+
+  bh = (getmaxy(*doingBoard)) - 4;
+  bw = (getmaxx(*doingBoard)) - 4;
+  *doing = derwin(*doingBoard, bh, bw, 2, 2);
+
+  bh = (getmaxy(*doneBoard)) - 4;
+  bw = (getmaxx(*doneBoard)) - 4;
+  *done = derwin(*doneBoard, bh, bw, 2, 2);
+
+  // Print todo
+  title(todoBoard, "| TODO |");
+  printList(*todo, boardList->todo, 1);
+
+  // Print doing
+  title(doingBoard, "| DOING |");
+  printList(*doing, boardList->doing, 2);
+
+  // Print done
+  title(doneBoard, "| DONE |");
+  printList(*done, boardList->done, 3);
+
+  wrefresh(*board);
+  wrefresh(*todoBoard);
+  wrefresh(*doingBoard);
+  wrefresh(*doneBoard);
+  wrefresh(*todo);
+  wrefresh(*doing);
+  wrefresh(*done);
+}
+
 void render(board_t *board_init) {
   initCore(board_init);
   boardList = board_init;
@@ -570,3 +400,5 @@ void render(board_t *board_init) {
   refresh();
   endwin();
 }
+
+//////////////////////////////////////////////////////

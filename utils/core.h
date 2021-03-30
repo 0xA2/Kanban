@@ -1,11 +1,13 @@
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <regex.h>
+#include <errno.h>
+#include <limits.h>
 #include <time.h>
 
-#include "utils/tasklist.h"
+#include "tasklist.h"
 
 #ifndef KANBAN_BOARD_UTILS_CORE_H_
 typedef struct board {
@@ -17,7 +19,6 @@ typedef struct board {
 
 void initCore(board_t *board_init);
 
-int readInt(int *, char *);
 void addTask(int, char *);
 int workOnTask(int, int, int, int, char *);
 int closeTask(int);

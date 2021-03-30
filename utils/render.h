@@ -1,22 +1,15 @@
-#include <ncurses.h>
-#include <form.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#include "core.h"
+#include "form_tools.h"
 
 #ifndef KANBAN_BOARD__RENDER_H
-void title(WINDOW *, char *);
-void initBoard();
-void renderBoard();
-void printList(WINDOW *, tasklist *, int);
-void renderMenu(int);
 void addChoice();
 void startChoice();
 void closeChoice();
-void getNextMenu(int);
 void choiceLoop();
+void reAssign();
+void reopen();
+
+void renderMenu(int);
+void renderBoard();
 void render(board_t *);
 #define KANBAN_BOARD__RENDER_H
 

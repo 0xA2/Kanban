@@ -3,73 +3,10 @@
 #define MAX_TASKS 10
 
 board_t *board;
-const int MAX_VALID_YR = 2038;
-const int MIN_VALID_YR = 1970;
 
 void initCore(board_t *board_init) {
   board = board_init;
 }
-
-//////////////////////////////////////////////////////
-
-/* UTILS */
-
-int isLeap(int year) {
-  return (((year % 4 == 0) &&
-      (year % 100 != 0)) ||
-      (year % 400 == 0));
-}
-
-int isValidDate(int d, int m, int y) {
-
-  if (y > MAX_VALID_YR ||
-      y < MIN_VALID_YR)
-    return 0;
-  if (m < 1 || m > 12)
-    return 0;
-  if (d < 1 || d > 31)
-    return 0;
-
-  if (m == 2) {
-    if (isLeap(y))
-      return (d <= 29);
-    else
-      return (d <= 28);
-  }
-
-  if (m == 4 || m == 6 ||
-      m == 9 || m == 11)
-    return (d <= 30);
-
-  return 1;
-}
-
-int readInt(int *op, char *buffer) {
-
-  // Function to read user input and use it as an integer
-  // Non digit characters will be ignored
-
-  long toInt;
-
-  // Convert string input into long and ignore not digit characters
-  char *end;
-  errno = 0;
-  toInt = strtol(buffer, &end, 10);
-
-  // Check errors
-
-  if (errno == ERANGE
-      || end == buffer
-      || (*end && *end != '\n')
-      || (toInt > INT_MAX || toInt < INT_MIN)) {
-    return 0;
-  } else {
-    *op = (int) toInt;
-    return 1;
-  }
-}
-
-//////////////////////////////////////////////////////
 
 /* CORE FUNCTIONALITY */
 

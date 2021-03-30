@@ -22,6 +22,6 @@ add_executable(kanban
         ./utils/render.c
 
         ./main.c
-        )
+        utils/form_tools.c utils/form_tools.h)
 
 target_link_libraries(kanban ${CURSES_LIBRARIES})
