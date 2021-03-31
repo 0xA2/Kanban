@@ -3,6 +3,9 @@
 //////////////////////////////////////////////////////
 board_t *boardList;
 
+int maxx;
+int maxy;
+
 WINDOW *menuWin;
 WINDOW *boardWin;
 WINDOW *todoBoard;
@@ -14,7 +17,7 @@ WINDOW *done;
 WINDOW *fieldsWin;
 WINDOW *formWin;
 
-char *choices[] = {
+static char *choices[] = {
     "Add task",
     "Start task",
     "Close task",
@@ -23,7 +26,7 @@ char *choices[] = {
     "Exit",
 };
 
-int n_choices = sizeof(choices) / sizeof(char *);
+static int n_choices = sizeof(choices) / sizeof(char *);
 
 //////////////////////////////////////////////////////
 
@@ -88,10 +91,9 @@ void driver(FORM *form, FIELD **fields) {
 }
 
 FORM *renderForm(struct field_info *options, int s) {
-  FIELD **fields = (FIELD **) malloc(s * sizeof(FIELD));
-
-  formWin = derwin(stdscr, getmaxy(stdscr) / 2, getmaxx(stdscr) / 2, getmaxy(stdscr) / 4, getmaxx(stdscr) / 4);
-  fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
+  FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
+  formWin = derwin(boardWin, getmaxy(boardWin), getmaxx(boardWin), 0, 0);
+  fieldsWin = derwin(formWin, getmaxy(boardWin) - 2, getmaxx(boardWin) - 2, 1, 1);
   box(formWin, 0, 0);
 
   for (int i = 0; i < s; ++i) {
@@ -127,12 +129,13 @@ FORM *renderForm(struct field_info *options, int s) {
     }
   }
   assert(fields != NULL);
+  fields[s] = NULL;
 
   FORM *form = new_form(fields);
   assert(form != NULL);
 
   set_form_win(form, formWin);
-  set_form_sub(form, derwin(fieldsWin, getmaxy(fieldsWin), getmaxx(fieldsWin), 0, 0));
+  set_form_sub(form, fieldsWin);
   post_form(form);
 
   refresh();
@@ -148,9 +151,12 @@ FORM *renderForm(struct field_info *options, int s) {
 
 /* MAIN UI LOOP */
 
-void unpost(FORM *form) {
+void unpost(FORM *form, FIELD **fields) {
   unpost_form(form);
   free_form(form);
+  for (int i = 0; fields[i] == NULL; ++i) {
+    free_field(fields[i]);
+  }
 }
 
 void addChoice() {
@@ -181,7 +187,7 @@ void addChoice() {
   // Adding task to list
   addTask(priorityInt, descriptionBuffer);
 
-  unpost(form);
+  unpost(form, form->field);
   choiceLoop();
 }
 
@@ -227,10 +233,10 @@ void startChoice() {
   e3 = readInt(&year, yearBuffer);
 
   if (!(e1 || e2 || e3) || !isValidDate(day, month, year)) {
-    unpost(form);
+    unpost(form, form->field);
     startChoice();
   } else {
-    unpost(form);
+    unpost(form, form->field);
     // Adding task to list
     workOnTask(idInt, day, month - 1, year, personBuffer);
     choiceLoop();
@@ -259,7 +265,7 @@ void closeChoice() {
   // Adding task to done
   closeTask(idInt);
 
-  unpost(form);
+  unpost(form, form->field);
   choiceLoop();
 }
 
@@ -291,7 +297,7 @@ void reAssign() {
   // Adding task to done
   reassignTask(idInt, personBuffer);
 
-  unpost(form);
+  unpost(form, form->field);
   choiceLoop();
 }
 
@@ -317,7 +323,7 @@ void reOpen() {
   // Adding task to done
   reopenTask(idInt);
 
-  unpost(form);
+  unpost(form, form->field);
   choiceLoop();
 }
 
@@ -347,8 +353,8 @@ void choiceLoop() {
   int choice = 0;
   int c;
 
-  int startx = getmaxx(stdscr);
-  int starty = getmaxy(stdscr);
+  maxx = getmaxx(stdscr);
+  maxy = getmaxy(stdscr);
 
   nuke();
 
@@ -359,11 +365,11 @@ void choiceLoop() {
   // Press right highlight and select next option, left is the opposite
   while (1) {
 
-    if (is_term_resized(starty, startx)) {
+    if (is_term_resized(maxy, maxx)) {
       nuke();
 
-      startx = getmaxx(stdscr);
-      starty = getmaxy(stdscr);
+      maxx = getmaxx(stdscr);
+      maxy = getmaxy(stdscr);
 
       renderBoard();
       renderMenu(highlight);
@@ -413,10 +419,10 @@ void renderMenu(int highlight) {
 
   // Upper left corner of menu
   int startx = 0;
-  int starty = getmaxy(stdscr) - 3;
+  int starty = maxy - 3;
 
   // Menu dimensions
-  int width = getmaxx(stdscr);
+  int width = maxx;
   int height = 3;
 
   // Selection Menu Dimensions
