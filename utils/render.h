@@ -1,6 +1,14 @@
 #include "./form_tools.h"
+#include <form.h>
+#include <ncurses.h>
 
 #ifndef KANBAN_BOARD__RENDER_H
+typedef struct field_info {
+  char *type;
+  char *label;
+  int number;
+} field_i;
+
 void addChoice();
 void startChoice();
 void closeChoice();

@@ -14,7 +14,6 @@ int readInt(int *, char *);
 
 char *trimWhitespaces(char *);
 
-void freeFormFields(FORM *, FIELD **);
 FIELD *newFieldPrompt(int, char *);
 FIELD *newFieldInputInt(int, int, int);
 FIELD *newFieldInputStr(int);

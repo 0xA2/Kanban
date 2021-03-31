@@ -82,59 +82,6 @@ char *trimWhitespaces(char *str) {
   return str;
 }
 
-void freeFormFields(FORM *form, FIELD **fields) {
-  for (int i = 0; fields[i] != NULL; ++i) { free_field(fields[i]); }
-  free_form(form);
-}
-
-FIELD *newFieldPrompt(int pos, char *prompt) {
-  FIELD *newField;
-  newField = new_field(1, 25, pos * 2, 0, 0, 0);
-  set_field_buffer(newField, 0, prompt);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
-
-  return newField;
-}
-
-FIELD *newFieldButton(int pos, char *prompt) {
-  FIELD *newField;
-  newField = new_field(1, 7, pos * 2, 0, 0, 0);
-  set_field_buffer(newField, 0, prompt);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_ACTIVE);
-
-  return newField;
-}
-
-FIELD *newFieldInputInt(int pos, int min, int max) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_NUMERIC, min, max);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
-FIELD *newFieldInputStr(int pos) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_ALPHA, 1);
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
-FIELD *newFieldInputDate(int pos) {
-  FIELD *newField;
-  newField = new_field(1, 40, pos * 2, 25, 0, 0);
-  set_field_type(newField, TYPE_REGEXP, "[0-9][0-9]\\/[0-9][0-9]\\/[0-9][0-9][0-9][0-9]");
-  set_field_opts(newField, O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-  set_field_back(newField, A_UNDERLINE);
-
-  return newField;
-}
-
 /* BOARD STUFF */
 
 void title(WINDOW *win, char *title) {

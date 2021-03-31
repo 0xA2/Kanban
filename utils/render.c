@@ -11,12 +11,8 @@ WINDOW *doingBoard;
 WINDOW *doing;
 WINDOW *doneBoard;
 WINDOW *done;
-
 WINDOW *fieldsWin;
 WINDOW *formWin;
-
-FIELD *fields[8];
-FORM *form;
 
 char *choices[] = {
     "Add task",
@@ -28,9 +24,25 @@ char *choices[] = {
 };
 
 int n_choices = sizeof(choices) / sizeof(char *);
+
 //////////////////////////////////////////////////////
 
-void driver() {
+void nuke() {
+  clear();
+  clrtoeol();
+  refresh();
+  endwin();
+
+  initscr();
+  clear();
+  noecho();
+  keypad(stdscr, TRUE);
+  refresh();
+}
+
+void driver(FORM *form, FIELD **fields) {
+  pos_form_cursor(form);
+
   int ch;
   while (1) {
     if (current_field(form) == fields[field_count(form) - 1]) {
@@ -71,118 +83,137 @@ void driver() {
       default:form_driver(form, ch);
         break;
     }
-
     wrefresh(fieldsWin);
   }
 }
 
-void renderForm() {
-  refresh();
-  wrefresh(formWin);
-  wrefresh(fieldsWin);
+FORM *renderForm(struct field_info *options, int s) {
+  FIELD **fields = (FIELD **) malloc(s * sizeof(FIELD));
 
-  form = new_form(fields);
-  assert(form != NULL);
-
-  formWin = derwin(stdscr, getmaxy(stdscr) - 4, getmaxx(stdscr) - 4, getmaxy(stdscr) - 2, getmaxx(stdscr) - 2);
+  formWin = derwin(stdscr, getmaxy(stdscr) / 2, getmaxx(stdscr) / 2, getmaxy(stdscr) / 4, getmaxx(stdscr) / 4);
   fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
   box(formWin, 0, 0);
+
+  for (int i = 0; i < s; ++i) {
+    if (strcmp(options[i].type, "prompt") == 0) {
+      fields[i] = new_field(1, 25, options[i].number * 2, 0, 0, 0);
+      set_field_buffer(fields[options[i].number], 0, options[i].label);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
+
+    } else if (strcmp(options[i].type, "button") == 0) {
+      fields[i] = new_field(1, 7, options[i].number * 2, 0, 0, 0);
+      set_field_buffer(fields[options[i].number], 0, options[i].label);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_ACTIVE);
+
+    } else if (strcmp(options[i].type, "input_int") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number], TYPE_INTEGER, 1, 1, 10);
+
+    } else if (strcmp(options[i].type, "input_str") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number], TYPE_REGEXP, "[a-zA-Z0-9_]+( [a-zA-Z0-9_]+)*");
+
+    } else if (strcmp(options[i].type, "input_date") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number],
+                     TYPE_REGEXP,
+                     "([0-2][0-9]|3[01])\\/(0[0-9]|1[0-2])\\/([01][0-9][0-9]|20[0-9][0-9])");
+    }
+  }
+  assert(fields != NULL);
+
+  FORM *form = new_form(fields);
+  assert(form != NULL);
 
   set_form_win(form, formWin);
   set_form_sub(form, derwin(fieldsWin, getmaxy(fieldsWin), getmaxx(fieldsWin), 0, 0));
   post_form(form);
-  pos_form_cursor(form);
 
   refresh();
   wrefresh(formWin);
   wrefresh(fieldsWin);
 
-  driver();
+  driver(form, fields);
+
+  return form;
 }
 
 //////////////////////////////////////////////////////
 
 /* MAIN UI LOOP */
 
-void nuke() {
-  clear();
-  clrtoeol();
-  refresh();
-  endwin();
-
-  initscr();
-  clear();
-  noecho();
-  keypad(stdscr, TRUE);
-  refresh();
+void unpost(FORM *form) {
+  unpost_form(form);
+  free_form(form);
 }
 
 void addChoice() {
-  fields[0] = newFieldPrompt(0, "Priority [1-10]:");
-  fields[1] = newFieldInputInt(0, 0, 10);
-  fields[2] = newFieldPrompt(1, "Description:");
-  fields[3] = newFieldInputStr(1);
-  fields[4] = newFieldButton(2, "[ OK ]");
+  struct field_info options[5] = {
+      {"prompt", "Priority [1-10]:", 0},
+      {"input_int", NULL, 1},
+      {"prompt", "Description:", 2},
+      {"input_str", NULL, 3},
+      {"button", "[ OK ]", 4}
+  };
 
-  for (int i = 0; i < 5; ++i) {
-    assert(fields[i] != NULL);
-  }
-
-  renderForm();
+  FORM *form = renderForm(options, 5);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
     addChoice();
   }
 
   // Reading priority
-  char *priorityBuffer = strtok(field_buffer(form->field[1], 0), " ");
+  char *priorityBuffer = field_buffer(form->field[1], 0);
+  trimWhitespaces(priorityBuffer);
   int priorityInt;
   readInt(&priorityInt, priorityBuffer);
 
   // Reading description
-  char descriptionBuffer[80];
-  strcpy(descriptionBuffer, field_buffer(form->field[3], 0));
+  char *descriptionBuffer = field_buffer(form->field[3], 0);
   trimWhitespaces(descriptionBuffer);
 
   // Adding task to list
   addTask(priorityInt, descriptionBuffer);
 
-  freeFormFields(form, fields);
+  unpost(form);
   choiceLoop();
 }
 
 void startChoice() {
-  fields[0] = newFieldPrompt(0, "Task ID:");
-  fields[1] = newFieldInputInt(0, 0, 10);
-  fields[2] = newFieldPrompt(1, "Assign to:");
-  fields[3] = newFieldInputStr(1);
-  fields[4] = newFieldPrompt(2, "Deadline (dd/mm/year):");
-  fields[5] = newFieldInputDate(2);
-  fields[6] = newFieldButton(3, "[ OK ]");
+  struct field_info options[7] = {
+      {"prompt", "Task ID:", 0},
+      {"input_int", NULL, 1},
+      {"prompt", "Assign to:", 2},
+      {"input_str", NULL, 3},
+      {"prompt", "Deadline (dd/mm/year):", 4},
+      {"input_date", NULL, 5},
+      {"button", "[ OK ]", 6}
+  };
 
-  for (int i = 0; i < 7; ++i) {
-    assert(fields[i] != NULL);
-  }
-
-  renderForm();
+  FORM *form = renderForm(options, 7);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
     startChoice();
   }
 
   // Reading ID
-  char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
+  char *idBuffer = field_buffer(form->field[1], 0);
+  trimWhitespaces(idBuffer);
   int idInt;
   readInt(&idInt, idBuffer);
 
   // Reading assigned worker
-  char personBuffer[80];
-  strcpy(personBuffer, field_buffer(form->field[3], 0));
+  char *personBuffer = field_buffer(form->field[3], 0);
   trimWhitespaces(personBuffer);
 
   // Reading deadline
-  char deadlineBuffer[80];
-  strcpy(deadlineBuffer, field_buffer(form->field[5], 0));
+  char *deadlineBuffer = field_buffer(form->field[5], 0);
   trimWhitespaces(deadlineBuffer);
 
   int day, e1, month, e2, year, e3;
@@ -196,89 +227,97 @@ void startChoice() {
   e3 = readInt(&year, yearBuffer);
 
   if (!(e1 || e2 || e3) || !isValidDate(day, month, year)) {
-    freeFormFields(form, fields);
+    unpost(form);
     startChoice();
   } else {
+    unpost(form);
     // Adding task to list
     workOnTask(idInt, day, month - 1, year, personBuffer);
-    freeFormFields(form, fields);
     choiceLoop();
   }
 }
 
 void closeChoice() {
-  fields[0] = newFieldPrompt(0, "Task ID:");
-  fields[1] = newFieldInputInt(0, 0, 10);
-  fields[2] = newFieldButton(1, "[ OK ]");
+  struct field_info options[3] = {
+      {"prompt", "Task ID:", 0},
+      {"input_int", NULL, 1},
+      {"button", "[ OK ]", 2}
+  };
 
-  for (int i = 0; i < 3; ++i) {
-    assert(fields[i] != NULL);
+  FORM *form = renderForm(options, 3);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    closeChoice();
   }
 
-  renderForm();
-
   // Reading ID
-  char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
+  char *idBuffer = field_buffer(form->field[1], 0);
+  idBuffer = strtok(idBuffer, " ");
   int idInt;
   readInt(&idInt, idBuffer);
 
   // Adding task to done
   closeTask(idInt);
 
-  freeFormFields(form, fields);
+  unpost(form);
   choiceLoop();
 }
 
 void reAssign() {
-  fields[0] = newFieldPrompt(0, "Task ID:");
-  fields[1] = newFieldInputInt(0, 0, 10);
-  fields[2] = newFieldPrompt(1, "Assign to:");
-  fields[3] = newFieldInputStr(1);
-  fields[4] = newFieldButton(2, "[ OK ]");
+  struct field_info options[5] = {
+      {"prompt", "Task ID:", 0},
+      {"input_int", NULL, 1},
+      {"prompt", "Assign to:", 2},
+      {"input_str", NULL, 3},
+      {"button", "[ OK ]", 4}
+  };
 
-  for (int i = 0; i < 5; ++i) {
-    assert(fields[i] != NULL);
+  FORM *form = renderForm(options, 3);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    reAssign();
   }
 
-  renderForm();
-
   // Reading ID
-  char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
+  char *idBuffer = field_buffer(form->field[1], 0);
+  trimWhitespaces(idBuffer);
   int idInt;
   readInt(&idInt, idBuffer);
 
   // Reading assigned worker
-  char personBuffer[80];
-  strcpy(personBuffer, field_buffer(form->field[3], 0));
+  char *personBuffer = field_buffer(form->field[3], 0);
   trimWhitespaces(personBuffer);
 
   // Adding task to done
   reassignTask(idInt, personBuffer);
 
-  freeFormFields(form, fields);
+  unpost(form);
   choiceLoop();
 }
 
 void reOpen() {
-  fields[0] = newFieldPrompt(0, "Task ID:");
-  fields[1] = newFieldInputInt(0, 0, 10);
-  fields[2] = newFieldButton(1, "[ OK ]");
+  struct field_info options[3] = {
+      {"prompt", "Task ID:", 0},
+      {"input_int", NULL, 1},
+      {"button", "[ OK ]", 2}
+  };
 
-  for (int i = 0; i < 3; ++i) {
-    assert(fields[i] != NULL);
+  FORM *form = renderForm(options, 3);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    reAssign();
   }
 
-  renderForm();
-
   // Reading ID
-  char *idBuffer = strtok(field_buffer(form->field[1], 0), " ");
+  char *idBuffer = field_buffer(form->field[1], 0);
+  trimWhitespaces(idBuffer);
   int idInt;
   readInt(&idInt, idBuffer);
 
   // Adding task to done
   reopenTask(idInt);
 
-  freeFormFields(form, fields);
+  unpost(form);
   choiceLoop();
 }
 
@@ -480,6 +519,7 @@ void render(board_t *board_init) {
   keypad(stdscr, TRUE);
 
   choiceLoop();
+  nuke();
 
   clrtoeol();
   refresh();
