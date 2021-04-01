@@ -48,10 +48,11 @@ void driver(FORM *form, FIELD **fields) {
 
   int ch;
   while (1) {
+
     if (current_field(form) == fields[field_count(form) - 1]) {
       set_field_back(fields[field_count(form) - 1], A_REVERSE);
     } else {
-      set_field_back(fields[field_count(form) - 1], A_BOLD);
+      set_field_back(fields[field_count(form) - 1], A_BLINK);
     }
 
     ch = getch();
@@ -74,6 +75,21 @@ void driver(FORM *form, FIELD **fields) {
       case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
         break;
 
+      case KEY_DC:form_driver(form, REQ_DEL_PREV);
+        break;
+
+      case 127:form_driver(form, REQ_DEL_PREV);
+        break;
+
+      case KEY_ENTER:
+          if (current_field(form) == fields[field_count(form) - 1]) {
+            form_driver(form, REQ_VALIDATION);
+            return;
+          } else {
+            form_driver(form, REQ_NEXT_FIELD);
+          }
+        break;
+
       case 10:
         if (current_field(form) == fields[field_count(form) - 1]) {
           form_driver(form, REQ_VALIDATION);
@@ -86,6 +102,8 @@ void driver(FORM *form, FIELD **fields) {
       default:form_driver(form, ch);
         break;
     }
+
+    wrefresh(formWin);
     wrefresh(fieldsWin);
   }
 }
@@ -232,7 +250,7 @@ void startChoice() {
   e2 = readInt(&month, monthBuffer);
   e3 = readInt(&year, yearBuffer);
 
-  if (!(e1 || e2 || e3) || !isValidDate(day, month, year)) {
+  if (!(e1 || e2 || e3) || isValidDate(year, month, day) != TRUE) {
     unpost(form, form->field);
     startChoice();
   } else {
@@ -278,7 +296,7 @@ void reAssign() {
       {"button", "[ OK ]", 4}
   };
 
-  FORM *form = renderForm(options, 3);
+  FORM *form = renderForm(options, 5);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
     reAssign();

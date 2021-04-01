@@ -12,20 +12,26 @@ int isLeap(int year) {
   return (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0));
 }
 
-int isValidDate(int d, int m, int y) {
-  time_t rawtime;
-  rawtime = time(NULL);
+int isValidDate(int y, int m, int d) {
+  time_t raw;
+  struct tm *now = localtime(&raw);
 
-  struct tm *now;
-  now = localtime(&rawtime);
-
-  if (y > MAX_VALID_YR || y < now->tm_year)
+  if (y > MAX_VALID_YR)
     return 0;
 
-  if (m < 1 || m > 12 || (y == now->tm_year && m < now->tm_mon))
+  if (y < now->tm_year)
+      return 0;
+
+  if (y == now->tm_year && m < now->tm_mon)
+      return 0;
+
+  if ((y == now->tm_year && m == now->tm_mon) && d < now->tm_mday)
+      return 0;
+
+  if (m < 1 || m > 12)
     return 0;
 
-  if (d < 1 || d > 31 || ((y == now->tm_year && m == now->tm_mon) && d < now->tm_mday))
+  if (d < 1 || d > 31)
     return 0;
 
   if (m == 2) {
