@@ -54,7 +54,7 @@ int workOnTask(int id, int d, int m, int y, char *worker) {
     cardAssign(toMove, worker);
 
     // Add task to doing
-    listAddByPriority(toMove, board->doing);
+    listAddByName(toMove, board->doing);
     return 1;
   }
 
