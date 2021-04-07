@@ -178,7 +178,7 @@ void listAddByPriority(card *c, tasklist *l) {
         l->size++;
         return;
       }
-      if (c->dateCreated > after->task->dateCreated) {
+      if (c->dateCreated >= after->task->dateCreated) {
         newNode->next = after->next;
         after->next = newNode;
         l->size++;
