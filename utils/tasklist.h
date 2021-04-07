@@ -25,6 +25,7 @@ void listRemoveFirst(tasklist *);
 void listRemoveLast(tasklist *);
 int listSize(tasklist *);
 void listAddByPriority(card *, tasklist *);
+void listAddByName(card*, tasklist*);
 void listAddByDate(card *, tasklist *);
 void listAddByConclusion(card *, tasklist *);
 int listTaskExists(int, tasklist *);
