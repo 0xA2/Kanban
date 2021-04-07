@@ -256,6 +256,41 @@ void listAddByDate(card *c, tasklist *l) {
   }
 }
 
+// Adds new task to list in order of name of worker
+void listAddByName(card* c, tasklist* l){
+	node* newNode = nodeNew(c, NULL);
+
+	// List is empty
+	if (listIsEmpty(l)){listAddFirst(c,l); return;}
+
+	// List with one task
+	int cmp = strcmp(c -> person,listGetFirst(l) -> person);
+	if(cmp <= 0){ listAddFirst(c,l); return;}
+	if(cmp > 0){ listAddLast(c,l); return;}
+
+	// List with two or more tasks
+	node* cur = l -> first;
+	node* after = l -> first -> next;
+	while(after -> next != NULL) {
+		cmp = strcmp(c -> person, after -> task -> person);
+		if(cmp > 0){ cur = after; after = after -> next;}
+		if(cmp <= 0){
+			cur -> next = newNode;
+			newNode -> next = after;
+			l -> size++;
+			return;
+		}
+	}
+
+	// Check of node should be added before last
+	cmp = strcmp(c -> person, after -> task -> person);
+	if(cmp <= 0){
+		cur -> next = newNode;
+		newNode -> next = after;
+	}
+}
+
+
 // Adds new task to list in order of date of conclusion
 void listAddByConclusion(card *c, tasklist *l) {
   node *newNode = nodeNew(c, NULL);
