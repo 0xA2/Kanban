@@ -266,6 +266,7 @@ void listAddByName(card* c, tasklist* l){
 	// List with one task
 	int cmp = strcmp(c -> person,listGetFirst(l) -> person);
 	if(cmp <= 0){ listAddFirst(c,l); return;}
+	cmp = strcmp(c -> person,listGetLast(l) -> person);
 	if(cmp > 0){ listAddLast(c,l); return;}
 
 	// List with two or more tasks
@@ -541,7 +542,7 @@ tasklist *loadDoing(tasklist *all) {
       card *c = cardNew(id, priority, dateCreated, desc);
       cardAssign(c, worker);
       cardSetDeadline(c, deadline);
-      listAddByPriority(c, ret);
+      listAddByName(c, ret);
       listAddByDate(c, all);
 
     }
