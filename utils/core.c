@@ -82,12 +82,14 @@ int reassignTask(int id, char *worker) {
   }
 
   card *toChange = (card *) malloc(sizeof(card));
-  if ((toChange = listGetTaskByID(id, board->doing)) != NULL) {
+  if ((toChange = listRemoveTaskByID(id, board->doing)) != NULL) {
     cardAssign(toChange, worker);
+    listAddByName(toChange, board->doing);
     return 1;
   }
   return 0;
 }
+
 
 int reopenTask(int id) {
   // Chech if task exists in done
