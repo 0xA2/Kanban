@@ -17,7 +17,7 @@ WINDOW *done;
 WINDOW *fieldsWin;
 WINDOW *formWin;
 
-static char *choices[] = {
+static const char *choices[] = {
     "Add task",
     "Start task",
     "Close task",
@@ -30,79 +30,76 @@ static int n_choices = sizeof(choices) / sizeof(char *);
 
 //////////////////////////////////////////////////////
 
+// clears windows, refreshes screen
+// any window that was on screen needs to be refreshed afterwards
 void nuke() {
-  clear();
-  clrtoeol();
-  refresh();
   endwin();
-
-  initscr();
+  refresh();
   clear();
-  noecho();
-  keypad(stdscr, TRUE);
   refresh();
 }
 
 void driver(FORM *form, FIELD **fields) {
+  keypad(fieldsWin, TRUE);
   pos_form_cursor(form);
 
   int ch;
   while (1) {
-
     if (current_field(form) == fields[field_count(form) - 1]) {
-      set_field_back(fields[field_count(form) - 1], A_REVERSE);
+      set_field_back(fields[field_count(form) - 1], A_STANDOUT);
+      form_driver(form, REQ_END_LINE);
     } else {
       set_field_back(fields[field_count(form) - 1], A_BOLD);
     }
 
-    ch = getch();
+    ch = wgetch(fieldsWin);
 
     switch (ch) {
-      case KEY_LEFT:form_driver(form, REQ_PREV_CHAR);
-        break;
+    case KEY_LEFT:form_driver(form, REQ_PREV_CHAR);
+      break;
 
-      case KEY_RIGHT:form_driver(form, REQ_NEXT_CHAR);
-        break;
+    case KEY_RIGHT:form_driver(form, REQ_NEXT_CHAR);
+      break;
 
-      case KEY_DOWN:
-          form_driver(form, REQ_END_LINE);
-          form_driver(form, REQ_NEXT_FIELD);
-        break;
+    case KEY_DOWN:
+      form_driver(form, REQ_NEXT_FIELD);
+      form_driver(form, REQ_END_LINE);
+      break;
 
-      case KEY_UP:
-          form_driver(form, REQ_END_LINE);
-          form_driver(form, REQ_PREV_FIELD);
-        break;
+    case KEY_UP:
+      form_driver(form, REQ_PREV_FIELD);
+      form_driver(form, REQ_END_LINE);
+      break;
 
-      case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
-        break;
+    case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
+      break;
 
-      case KEY_DC:form_driver(form, REQ_DEL_PREV);
-        break;
+    case KEY_DC:form_driver(form, REQ_DEL_PREV);
+      break;
 
-      case 127:form_driver(form, REQ_DEL_PREV);
-        break;
+    case 127:form_driver(form, REQ_DEL_PREV);
+      break;
 
-      case KEY_ENTER:
-          if (current_field(form) == fields[field_count(form) - 1]) {
-            form_driver(form, REQ_VALIDATION);
-            return;
-          } else {
-            form_driver(form, REQ_NEXT_FIELD);
-          }
-        break;
+    case KEY_ENTER:
+      if (current_field(form) == fields[field_count(form) - 1]) {
+        form_driver(form, REQ_VALIDATION);
+        return;
+      } else {
+        form_driver(form, REQ_NEXT_FIELD);
+      }
+      break;
 
-      case 10:
-        if (current_field(form) == fields[field_count(form) - 1]) {
-          form_driver(form, REQ_VALIDATION);
-          return;
-        } else {
-          form_driver(form, REQ_NEXT_FIELD);
-        }
-        break;
+    case 10:
+      if (current_field(form) == fields[field_count(form) - 1]) {
+        form_driver(form, REQ_VALIDATION);
+        return;
+      } else {
+        form_driver(form, REQ_NEXT_FIELD);
+      }
+      break;
 
-      default:form_driver(form, ch);
-        break;
+    default:form_driver(form, ch);
+      break;
     }
 
     wrefresh(formWin);
@@ -180,7 +177,7 @@ void unpost(FORM *form, FIELD **fields) {
 }
 
 void addChoice() {
-  struct field_info options[5] = {
+  FIELD_INFO options[5] = {
       {"prompt", "Priority [1-10]:", 0},
       {"input_int", NULL, 1},
       {"prompt", "Description:", 2},
@@ -252,7 +249,7 @@ void startChoice() {
   e2 = readInt(&month, monthBuffer);
   e3 = readInt(&year, yearBuffer);
 
-  if (!(e1 || e2 || e3) || isValidDate(year, month, day) != TRUE) {
+  if (!(e1 || e2 || e3) || isValidDate(year, month, day) != TRUE || !listTaskExists(idInt, boardList->todo)) {
     unpost(form, form->field);
     startChoice();
   } else {
@@ -282,11 +279,15 @@ void closeChoice() {
   int idInt;
   readInt(&idInt, idBuffer);
 
-  // Adding task to done
-  closeTask(idInt);
-
-  unpost(form, form->field);
-  choiceLoop();
+  if (!listTaskExists(idInt, boardList->doing)) {
+    unpost(form, form->field);
+    startChoice();
+  } else {
+    // Adding task to done
+    closeTask(idInt);
+    unpost(form, form->field);
+    choiceLoop();
+  }
 }
 
 void reAssign() {
@@ -314,11 +315,15 @@ void reAssign() {
   char *personBuffer = field_buffer(form->field[3], 0);
   trimWhitespaces(personBuffer);
 
-  // Adding task to done
-  reassignTask(idInt, personBuffer);
-
-  unpost(form, form->field);
-  choiceLoop();
+  if (!listTaskExists(idInt, boardList->doing)) {
+    unpost(form, form->field);
+    reAssign();
+  } else {
+    // Reassign task
+    reassignTask(idInt, personBuffer);
+    unpost(form, form->field);
+    choiceLoop();
+  }
 }
 
 void reOpen() {
@@ -340,31 +345,35 @@ void reOpen() {
   int idInt;
   readInt(&idInt, idBuffer);
 
-  // Adding task to done
-  reopenTask(idInt);
-
-  unpost(form, form->field);
-  choiceLoop();
+  if (!listTaskExists(idInt, boardList->done)) {
+    unpost(form, form->field);
+    reOpen();
+  } else {
+    // Reopen task
+    reopenTask(idInt);
+    unpost(form, form->field);
+    choiceLoop();
+  }
 }
 
 void getNextMenu(int choice) {
   switch (choice) {
-    case 1:addChoice();
-      break;
+  case 1:addChoice();
+    break;
 
-    case 2:startChoice();
-      break;
+  case 2:startChoice();
+    break;
 
-    case 3:closeChoice();
-      break;
+  case 3:closeChoice();
+    break;
 
-    case 4:reAssign();
-      break;
+  case 4:reAssign();
+    break;
 
-    case 5:reOpen();
-      break;
+  case 5:reOpen();
+    break;
 
-    default: saveTasks(boardList->todo, boardList->doing, boardList->done);
+  default: saveTasks(boardList->todo, boardList->doing, boardList->done);
   }
 }
 
@@ -397,26 +406,26 @@ void choiceLoop() {
 
     c = getch();
     switch (c) {
-      case KEY_LEFT:
-        if (highlight == 1) {
-          highlight = n_choices;
-        } else {
-          --highlight;
-        }
-        break;
+    case KEY_LEFT:
+      if (highlight == 1) {
+        highlight = n_choices;
+      } else {
+        --highlight;
+      }
+      break;
 
-      case KEY_RIGHT:
-        if (highlight == n_choices) {
-          highlight = 1;
-        } else {
-          ++highlight;
-        }
-        break;
+    case KEY_RIGHT:
+      if (highlight == n_choices) {
+        highlight = 1;
+      } else {
+        ++highlight;
+      }
+      break;
 
-      case 10:choice = highlight;
-        break;
+    case 10:choice = highlight;
+      break;
 
-      default: break;
+    default: break;
     }
 
     renderMenu(highlight);

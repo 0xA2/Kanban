@@ -257,40 +257,51 @@ void listAddByDate(card *c, tasklist *l) {
 }
 
 // Adds new task to list in order of name of worker
-void listAddByName(card* c, tasklist* l){
-	node* newNode = nodeNew(c, NULL);
+void listAddByName(card *c, tasklist *l) {
+  node *newNode = nodeNew(c, NULL);
 
-	// List is empty
-	if (listIsEmpty(l)){listAddFirst(c,l); return;}
+  // List is empty
+  if (listIsEmpty(l)) {
+    listAddFirst(c, l);
+    return;
+  }
 
-	// List with one task
-	int cmp = strcmp(c -> person,listGetFirst(l) -> person);
-	if(cmp <= 0){ listAddFirst(c,l); return;}
-	cmp = strcmp(c -> person,listGetLast(l) -> person);
-	if(cmp > 0){ listAddLast(c,l); return;}
+  // List with one task
+  int cmp = strcmp(c->person, listGetFirst(l)->person);
+  if (cmp <= 0) {
+    listAddFirst(c, l);
+    return;
+  }
+  cmp = strcmp(c->person, listGetLast(l)->person);
+  if (cmp > 0) {
+    listAddLast(c, l);
+    return;
+  }
 
-	// List with two or more tasks
-	node* cur = l -> first;
-	node* after = l -> first -> next;
-	while(after -> next != NULL) {
-		cmp = strcmp(c -> person, after -> task -> person);
-		if(cmp > 0){ cur = after; after = after -> next;}
-		if(cmp <= 0){
-			cur -> next = newNode;
-			newNode -> next = after;
-			l -> size++;
-			return;
-		}
-	}
+  // List with two or more tasks
+  node *cur = l->first;
+  node *after = l->first->next;
+  while (after->next != NULL) {
+    cmp = strcmp(c->person, after->task->person);
+    if (cmp > 0) {
+      cur = after;
+      after = after->next;
+    }
+    if (cmp <= 0) {
+      cur->next = newNode;
+      newNode->next = after;
+      l->size++;
+      return;
+    }
+  }
 
-	// Check of node should be added before last
-	cmp = strcmp(c -> person, after -> task -> person);
-	if(cmp <= 0){
-		cur -> next = newNode;
-		newNode -> next = after;
-	}
+  // Check of node should be added before last
+  cmp = strcmp(c->person, after->task->person);
+  if (cmp <= 0) {
+    cur->next = newNode;
+    newNode->next = after;
+  }
 }
-
 
 // Adds new task to list in order of date of conclusion
 void listAddByConclusion(card *c, tasklist *l) {
@@ -741,47 +752,50 @@ char *printDate(long time) {
 }
 
 char *listPrint(tasklist *l, int i, int option) {
-  if (listIsEmpty(l)) { return NULL; }
+  if (listIsEmpty(l)) {
+    return NULL;
+  }
 
   node *n = l->first;
   char *taskInfo = (char *) malloc(80 * sizeof(char));
   int cur = 0;
 
   while (n->next != NULL) {
-    if (cur == i) break;
+    if (cur == i)
+      break;
     n = n->next;
     ++cur;
   }
 
   switch (option) {
-    case 1:
-      sprintf(taskInfo,
-              "[ID: %d | Priority: %d]\n%s",
-              n->task->id,
-              n->task->priority,
-              n->task->description);
-      break;
+  case 1:
+    sprintf(taskInfo,
+            "[ID: %d | Priority: %d]\n%s",
+            n->task->id,
+            n->task->priority,
+            n->task->description);
+    break;
 
-    case 2:
-      sprintf(taskInfo,
-              "[ID: %d | Priority: %d]\n[Assigned to: %s | Deadline: %s]\n%s",
-              n->task->id,
-              n->task->priority,
-              n->task->person,
-              printDate(n->task->deadline),
-              n->task->description);
-      break;
+  case 2:
+    sprintf(taskInfo,
+            "[ID: %d | Priority: %d]\n[Assigned to: %s | Deadline: %s]\n%s",
+            n->task->id,
+            n->task->priority,
+            n->task->person,
+            printDate(n->task->deadline),
+            n->task->description);
+    break;
 
-    case 3:
-      sprintf(taskInfo,
-              "[ID: %d | Priority: %d | Completed by: %s]\n%s",
-              n->task->id,
-              n->task->priority,
-              n->task->person,
-              n->task->description);
-      break;
+  case 3:
+    sprintf(taskInfo,
+            "[ID: %d | Priority: %d | Completed by: %s]\n%s",
+            n->task->id,
+            n->task->priority,
+            n->task->person,
+            n->task->description);
+    break;
 
-    default:break;
+  default:break;
   }
 
   return taskInfo;

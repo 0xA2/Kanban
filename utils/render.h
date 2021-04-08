@@ -1,11 +1,12 @@
 #include "./form_tools.h"
 
 #ifndef KANBAN_BOARD__RENDER_H
+
 typedef struct field_info {
   char *type;
   char *label;
   int number;
-} field_i;
+} FIELD_INFO;
 
 void addChoice();
 void startChoice();

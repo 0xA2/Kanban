@@ -16,25 +16,40 @@ int isValidDate(int y, int m, int d) {
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
 
-  if (y > MAX_VALID_YR) { return 0; }
+  if (y > MAX_VALID_YR) {
+    return 0;
+  }
 
-  if (y < (tm.tm_year + 1900)){ return 0; }
+  if (y < (tm.tm_year + 1900)) {
+    return 0;
+  }
 
-  if (y == (tm.tm_year + 1900) && m < (tm.tm_mon + 1)) { return 0; }
+  if (y == (tm.tm_year + 1900) && m < (tm.tm_mon + 1)) {
+    return 0;
+  }
 
-  if ((y == (tm.tm_year + 1900) && m == (tm.tm_mon + 1)) && d < tm.tm_mday) { return 0; }
+  if ((y == (tm.tm_year + 1900) && m == (tm.tm_mon + 1)) && d < tm.tm_mday) {
+    return 0;
+  }
 
-  if (m < 1 || m > 12) { return 0; }
+  if (m < 1 || m > 12) {
+    return 0;
+  }
 
-  if (d < 1 || d > 31) { return 0; }
+  if (d < 1 || d > 31) {
+    return 0;
+  }
 
   if (m == 2) {
-    if (isLeap(y)) { return (d <= 29); }
-    else
+    if (isLeap(y)) {
+      return (d <= 29);
+    } else
       return (d <= 28);
   }
 
-  if (m == 4 || m == 6 || m == 9 || m == 11) { return (d <= 30); }
+  if (m == 4 || m == 6 || m == 9 || m == 11) {
+    return (d <= 30);
+  }
 
   return 1;
 }
@@ -64,7 +79,8 @@ char *trimWhitespaces(char *str) {
   char *end;
 
   // Trim leading space
-  while (isspace((unsigned char) *str)) str++;
+  while (isspace((unsigned char) *str))
+    str++;
 
   // All spaces?
   if (*str == 0)
@@ -72,7 +88,8 @@ char *trimWhitespaces(char *str) {
 
   // Trim trailing space
   end = str + strlen(str) - 1;
-  while (end > str && isspace((unsigned char) *end)) end--;
+  while (end > str && isspace((unsigned char) *end))
+    end--;
 
   // Write new null terminator character
   end[1] = '\0';
