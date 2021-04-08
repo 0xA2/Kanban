@@ -253,6 +253,7 @@ void listAddByDate(card *c, tasklist *l) {
   if (c->dateCreated < after->task->dateCreated) {
     cur->next = newNode;
     newNode->next = after;
+    l->size++;
   }
 }
 
@@ -300,6 +301,7 @@ void listAddByName(card *c, tasklist *l) {
   if (cmp <= 0) {
     cur->next = newNode;
     newNode->next = after;
+    l->size++;
   }
 }
 
