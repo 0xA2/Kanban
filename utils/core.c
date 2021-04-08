@@ -20,6 +20,9 @@ int getCurID() {
 }
 
 void addTask(int priority, char *description) {
+  if (priority > 10)
+    return;
+
   card *toAdd = (card *) malloc(sizeof(card));
   int id = getCurID();
 
@@ -185,18 +188,4 @@ void tasksFromWorker() {
   }
   getchar();
 }
-
-void tasksByDate() {
-  if (listIsEmpty(board->all)) { return; }
-  node *n = board->all->first;
-  puts("All Tasks: ");
-  printf("\tID: %d\n\tPriority %d: %s", n->task->id, n->task->priority, n->task->description);
-  while (n->next != NULL) {
-    n = n->next;
-    printf("\n\tID: %d\n\tPriority %d: %s", n->task->id, n->task->priority, n->task->description);
-  }
-  printf("\n");
-  getchar();
-}
-
-*/
+ */

@@ -797,6 +797,14 @@ char *listPrint(tasklist *l, int i, int option) {
             n->task->description);
     break;
 
+  case 4:
+    sprintf(taskInfo,
+            "[ID: %d | Date: %s]\n%s",
+            n->task->id,
+            printDate(n->task->dateCreated),
+            n->task->description);
+    break;
+
   default:break;
   }
 

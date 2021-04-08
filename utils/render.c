@@ -5,9 +5,12 @@ board_t *boardList;
 
 int maxx;
 int maxy;
+int currentBoard;
 
 WINDOW *menuWin;
 WINDOW *boardWin;
+WINDOW *allBoard;
+WINDOW *all;
 WINDOW *todoBoard;
 WINDOW *todo;
 WINDOW *doingBoard;
@@ -23,6 +26,8 @@ static const char *choices[] = {
     "Close task",
     "Reassign task",
     "Reopen a task",
+    "Tasks by person",
+    "See all",
     "Exit",
 };
 
@@ -40,11 +45,15 @@ void nuke() {
 }
 
 void driver(FORM *form, FIELD **fields) {
+  // allow arrow keys
   keypad(fieldsWin, TRUE);
+  // position cursor on form
   pos_form_cursor(form);
 
   int ch;
   while (1) {
+
+    // highlight the button field
     if (current_field(form) == fields[field_count(form) - 1]) {
       set_field_back(fields[field_count(form) - 1], A_STANDOUT);
       form_driver(form, REQ_END_LINE);
@@ -71,6 +80,7 @@ void driver(FORM *form, FIELD **fields) {
       form_driver(form, REQ_END_LINE);
       break;
 
+    // depending on the terminal emulator, the key code provided might be different
     case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
       break;
 
@@ -128,7 +138,7 @@ FORM *renderForm(struct field_info *options, int s) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
       set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
       set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number], TYPE_INTEGER, 1, 1, 10);
+      set_field_type(fields[options[i].number], TYPE_INTEGER, 1, 1, 1000);
 
     } else if (strcmp(options[i].type, "input_str") == 0) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
@@ -162,6 +172,38 @@ FORM *renderForm(struct field_info *options, int s) {
   driver(form, fields);
 
   return form;
+}
+
+void renderAll() {
+  int h, w, bh, bw;
+  h = getmaxy(stdscr) - 5;
+  w = getmaxx(stdscr) / 3;
+
+  // Portion of screen occupied by the board
+  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
+
+  allBoard = derwin(boardWin, h, w, 0, 0);
+  box(allBoard, 0, 0);
+
+
+  bh = (getmaxy(allBoard)) - 4;
+  bw = (getmaxx(allBoard)) - 4;
+  all = derwin(todoBoard, bh, bw, 2, 2);
+
+  // Print todo
+  title(allBoard, "| ALL |");
+  printList(all, boardList->all, 4);
+
+  wrefresh(allBoard);
+  wrefresh(all);
+}
+
+void initBoard(int option) {
+  if (option == 1) {
+    renderBoard();
+  } else if (option == -1) {
+    renderAll();
+  }
 }
 
 //////////////////////////////////////////////////////
@@ -356,6 +398,30 @@ void reOpen() {
   }
 }
 
+void personTasksChoice() {
+  FIELD_INFO options[3] = {
+      {"prompt", "Person to query:", 0},
+      {"input_str", NULL, 1},
+      {"button", "[ OK ]", 2}
+  };
+
+  FORM *form = renderForm(options, 3);
+
+  if (form_driver(form, REQ_VALIDATION) != 0) {
+    personTasksChoice();
+  }
+
+  // Reading description
+  char *personBuffer = field_buffer(form->field[1], 0);
+  trimWhitespaces(personBuffer);
+
+  // Adding task to list
+  //addTask(priorityInt, descriptionBuffer);
+
+  unpost(form, form->field);
+  choiceLoop();
+}
+
 void getNextMenu(int choice) {
   switch (choice) {
   case 1:addChoice();
@@ -373,7 +439,15 @@ void getNextMenu(int choice) {
   case 5:reOpen();
     break;
 
+  case 6:personTasksChoice();
+    break;
+
+  case 7:currentBoard *= -1;
+    choiceLoop();
+    break;
+
   default: saveTasks(boardList->todo, boardList->doing, boardList->done);
+    break;
   }
 }
 
@@ -387,8 +461,11 @@ void choiceLoop() {
 
   nuke();
 
-  renderBoard();
+  initBoard(currentBoard);
   renderMenu(highlight);
+
+  mvprintw(0, 1, "Use arrows to select option, \"s\" to switch board view.");
+
   refresh();
 
   // Press right highlight and select next option, left is the opposite
@@ -400,12 +477,21 @@ void choiceLoop() {
       maxx = getmaxx(stdscr);
       maxy = getmaxy(stdscr);
 
-      renderBoard();
+      initBoard(currentBoard);
       renderMenu(highlight);
+      mvprintw(0, 1, "Use arrows to select option, \"s\" to switch board view.");
+      wrefresh(stdscr);
     }
 
-    c = getch();
+    c = wgetch(menuWin);
+
     switch (c) {
+    // escape and alt key
+    case 's':
+      currentBoard *= -1;
+      initBoard(currentBoard);
+      break;
+
     case KEY_LEFT:
       if (highlight == 1) {
         highlight = n_choices;
@@ -492,11 +578,11 @@ void renderMenu(int highlight) {
 
 void renderBoard() {
   int h, w, bh, bw;
-  h = getmaxy(stdscr) - 3;
+  h = getmaxy(stdscr) - 5;
   w = getmaxx(stdscr) / 3;
 
   // Portion of screen occupied by the board
-  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 0, 0);
+  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
 
   // Each list box
   todoBoard = derwin(boardWin, h, w, 0, 0);
@@ -514,14 +600,17 @@ void renderBoard() {
   bh = (getmaxy(todoBoard)) - 4;
   bw = (getmaxx(todoBoard)) - 4;
   todo = derwin(todoBoard, bh, bw, 2, 2);
+  scrollok(todo, TRUE);
 
   bh = (getmaxy(doingBoard)) - 4;
   bw = (getmaxx(doingBoard)) - 4;
   doing = derwin(doingBoard, bh, bw, 2, 2);
+  scrollok(doing, TRUE);
 
   bh = (getmaxy(doneBoard)) - 4;
   bw = (getmaxx(doneBoard)) - 4;
   done = derwin(doneBoard, bh, bw, 2, 2);
+  scrollok(done, TRUE);
 
   // Print todo
   title(todoBoard, "| TODO |");
@@ -545,6 +634,7 @@ void renderBoard() {
 }
 
 void render(board_t *board_init) {
+  currentBoard = 1;
   initCore(board_init);
   boardList = board_init;
 
