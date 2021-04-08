@@ -1,6 +1,4 @@
 #include "./form_tools.h"
-#include <form.h>
-#include <ncurses.h>
 
 #ifndef KANBAN_BOARD__RENDER_H
 typedef struct field_info {

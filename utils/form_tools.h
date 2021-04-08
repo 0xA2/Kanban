@@ -1,6 +1,4 @@
 #include <ncurses.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <form.h>
 #include <assert.h>

@@ -52,7 +52,7 @@ void driver(FORM *form, FIELD **fields) {
     if (current_field(form) == fields[field_count(form) - 1]) {
       set_field_back(fields[field_count(form) - 1], A_REVERSE);
     } else {
-      set_field_back(fields[field_count(form) - 1], A_BLINK);
+      set_field_back(fields[field_count(form) - 1], A_BOLD);
     }
 
     ch = getch();
@@ -64,12 +64,14 @@ void driver(FORM *form, FIELD **fields) {
       case KEY_RIGHT:form_driver(form, REQ_NEXT_CHAR);
         break;
 
-      case KEY_DOWN:form_driver(form, REQ_NEXT_FIELD);
-        form_driver(form, REQ_END_LINE);
+      case KEY_DOWN:
+          form_driver(form, REQ_END_LINE);
+          form_driver(form, REQ_NEXT_FIELD);
         break;
 
-      case KEY_UP:form_driver(form, REQ_PREV_FIELD);
-        form_driver(form, REQ_END_LINE);
+      case KEY_UP:
+          form_driver(form, REQ_END_LINE);
+          form_driver(form, REQ_PREV_FIELD);
         break;
 
       case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
@@ -121,7 +123,7 @@ FORM *renderForm(struct field_info *options, int s) {
       set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
 
     } else if (strcmp(options[i].type, "button") == 0) {
-      fields[i] = new_field(1, 7, options[i].number * 2, 0, 0, 0);
+      fields[i] = new_field(1, 6, options[i].number * 2, 0, 0, 0);
       set_field_buffer(fields[options[i].number], 0, options[i].label);
       set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_ACTIVE);
 

@@ -735,7 +735,7 @@ char *printDate(long time) {
   time_t rawtime = time;
 
   struct tm *timeinfo = localtime(&rawtime);
-  strftime(date, 120, "%x", timeinfo);
+  strftime(date, 120, "%d/%m/%Y", timeinfo);
 
   return date;
 }
