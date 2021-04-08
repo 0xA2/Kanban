@@ -117,6 +117,9 @@ void driver(FORM *form, FIELD **fields) {
 }
 
 FORM *renderForm(struct field_info *options, int s) {
+  nuke();
+  mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
+
   FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
   formWin = derwin(boardWin, getmaxy(boardWin), getmaxx(boardWin), 0, 0);
   fieldsWin = derwin(formWin, getmaxy(boardWin) - 2, getmaxx(boardWin) - 2, 1, 1);
@@ -199,12 +202,13 @@ void renderPerson(char* name) {
 }
 
 void renderAll() {
+
   int h, w, bh, bw;
   h = getmaxy(stdscr) - 5;
-  w = getmaxx(stdscr) / 3;
+  w = getmaxx(stdscr);
 
   // Portion of screen occupied by the board
-  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
+  boardWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
 
   allBoard = derwin(boardWin, h, w, 0, 0);
   box(allBoard, 0, 0);
@@ -212,12 +216,13 @@ void renderAll() {
 
   bh = (getmaxy(allBoard)) - 4;
   bw = (getmaxx(allBoard)) - 4;
-  all = derwin(todoBoard, bh, bw, 2, 2);
+  all = derwin(boardWin, bh, bw, 2, 2);
 
   // Print todo
   title(allBoard, "| ALL |");
   printList(all, boardList->all, 4);
 
+  wrefresh(boardWin);
   wrefresh(allBoard);
   wrefresh(all);
 }

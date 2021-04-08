@@ -127,13 +127,14 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
   wmove(win, 0, 0);
 
   whline(win, ACS_HLINE, getmaxx(win));
-
   int counter = 0;
   if (!listIsEmpty(list)) {
     // Print tasks worker is currently doing
     node *n1 = list->first;
     int flag1 = 1;
+
     if (n1 != NULL) {
+
       if (strcmp(name, n1->task->person) == 0) {
         flag1 = 0;
         string = listPrint(list, counter, 1);
@@ -160,6 +161,7 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
         whline(win, ACS_HLINE, getmaxx(win));
       }
     }
+
   } else {
     string = "The guy's slacking.";
     wmove(win, getcury(win) + 1, 0);
