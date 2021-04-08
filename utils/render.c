@@ -27,7 +27,6 @@ static const char *choices[] = {
     "Reassign task",
     "Reopen a task",
     "Tasks by person",
-    "Exit",
 };
 
 static int n_choices = sizeof(choices) / sizeof(char *);
@@ -177,28 +176,69 @@ FORM *renderForm(struct field_info *options, int s) {
   return form;
 }
 
+void refreshBoard(){
+  refresh();
+  wrefresh(boardWin);
+  wrefresh(todoBoard);
+  wrefresh(doingBoard);
+  wrefresh(doneBoard);
+  wrefresh(todo);
+  wrefresh(doing);
+  wrefresh(done);
+}
+
 void renderPerson(char* name) {
+  nuke();
+  mvprintw(0, 1, "Please press \"R\" to return.");
+
   int h, w, bh, bw;
-  h = getmaxy(stdscr) - 5;
+  h = getmaxy(stdscr) - 3;
   w = getmaxx(stdscr) / 3;
 
   // Portion of screen occupied by the board
   boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
 
-  allBoard = derwin(boardWin, h, w, 0, 0);
-  box(allBoard, 0, 0);
+  // Each list box
+  todoBoard = derwin(boardWin, h, w, 0, 0);
+  doingBoard = derwin(boardWin, h, w, 0, w);
+  doneBoard = derwin(boardWin, h, w, 0, 2 * w);
 
+  box(todoBoard, 0, 0);
+  box(doingBoard, 0, 0);
+  box(doneBoard, 0, 0);
 
-  bh = (getmaxy(allBoard)) - 4;
-  bw = (getmaxx(allBoard)) - 4;
-  all = derwin(todoBoard, bh, bw, 2, 2);
+  // Boxes inside the previous ones to prevent text from overflowing
+  // - Getting the height and width
+  // - Since there are 3 windows, one of them might be smaller
+  // - We have to make this check for every. single. one.
+  bh = (getmaxy(todoBoard)) - 4;
+  bw = (getmaxx(todoBoard)) - 4;
+  todo = derwin(todoBoard, bh, bw, 2, 2);
+  scrollok(todo, TRUE);
+
+  bh = (getmaxy(doingBoard)) - 4;
+  bw = (getmaxx(doingBoard)) - 4;
+  doing = derwin(doingBoard, bh, bw, 2, 2);
+  scrollok(doing, TRUE);
+
+  bh = (getmaxy(doneBoard)) - 4;
+  bw = (getmaxx(doneBoard)) - 4;
+  done = derwin(doneBoard, bh, bw, 2, 2);
+  scrollok(done, TRUE);
 
   // Print todo
-  title(allBoard, "| DOING |");
-  printListByPerson(all, boardList->all, name);
+  title(todoBoard, "| TODO (no one assigned) |");
+  printList(todo, boardList->todo, 1);
 
-  wrefresh(allBoard);
-  wrefresh(all);
+  // Print doing
+  title(doingBoard, "| DOING |");
+  printListByPerson(doing, boardList->doing, name);
+
+  // Print done
+  title(doneBoard, "| DONE |");
+  printListByPerson(done, boardList->done, name);
+
+  refreshBoard();
 }
 
 void renderAll() {
@@ -450,11 +490,11 @@ void personTasksChoice() {
   unpost(form, form->field);
 
   int c;
-  wmove(menuWin, 0, 0);
   renderPerson(personBuffer);
-  while ((c = wgetch(menuWin)) != (KEY_LEFT | KEY_RIGHT | 's' | 'q')) {
-    wrefresh(doing);
-    wrefresh(done);
+  while (1) {
+    c = wgetch(menuWin);
+    if (c == KEY_LEFT || c == KEY_RIGHT || c == 'r')
+      break;
   }
 
   choiceLoop();
@@ -498,7 +538,7 @@ void choiceLoop() {
   initBoard(currentBoard);
   renderMenu(highlight);
 
-  mvprintw(0, 1, "Use arrows to select option, \"s\" to switch board view.");
+  mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
 
   refresh();
 
@@ -513,18 +553,33 @@ void choiceLoop() {
 
       initBoard(currentBoard);
       renderMenu(highlight);
-      mvprintw(0, 1, "Use arrows to select option, \"s\" to switch board view.");
+      mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
       wrefresh(stdscr);
     }
 
     c = wgetch(menuWin);
 
     switch (c) {
-    // escape and alt key
+
+    case 'r':
+      nuke();
+      initBoard(currentBoard);
+      mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
+      wrefresh(stdscr);
+      break;
+
     case 's':
       currentBoard *= -1;
       initBoard(currentBoard);
       break;
+
+    case KEY_F(1):
+      saveTasks(boardList->todo, boardList->doing, boardList->done);
+      break;
+
+    case KEY_F(2):
+      saveTasks(boardList->todo, boardList->doing, boardList->done);
+      return;
 
     case KEY_LEFT:
       if (highlight == 1) {
@@ -658,13 +713,7 @@ void renderBoard() {
   title(doneBoard, "| DONE |");
   printList(done, boardList->done, 3);
 
-  wrefresh(boardWin);
-  wrefresh(todoBoard);
-  wrefresh(doingBoard);
-  wrefresh(doneBoard);
-  wrefresh(todo);
-  wrefresh(doing);
-  wrefresh(done);
+  refreshBoard();
 }
 
 void render(board_t *board_init) {

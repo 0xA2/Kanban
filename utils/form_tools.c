@@ -154,7 +154,7 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
       }
 
       if (flag1) {
-        string = "The guy's slacking.";
+        string = "None found.";
         wmove(win, getcury(win) + 1, 0);
         waddstr(win, string);
         wmove(win, getcury(win) + 1, 0);
@@ -163,7 +163,7 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
     }
 
   } else {
-    string = "The guy's slacking.";
+    string = "None found.";
     wmove(win, getcury(win) + 1, 0);
     waddstr(win, string);
     wmove(win, getcury(win) + 1, 0);
