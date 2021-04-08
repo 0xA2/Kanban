@@ -12,6 +12,7 @@ int readInt(int *, char *);
 char *trimWhitespaces(char *);
 void title(WINDOW *, char *);
 void printList(WINDOW *, tasklist *, int);
+void printListByPerson(WINDOW*, tasklist*, char*);
 #define KANBAN_BOARD__FORMS_H
 
 #endif //KANBAN_BOARD__FORMS_H

@@ -121,3 +121,50 @@ void printList(WINDOW *win, tasklist *list, int option) {
     whline(win, ACS_HLINE, getmaxx(win));
   }
 }
+
+void printListByPerson(WINDOW *win, tasklist *list, char* name) {
+  char *string;
+  wmove(win, 0, 0);
+
+  whline(win, ACS_HLINE, getmaxx(win));
+
+  int counter = 0;
+  if (!listIsEmpty(list)) {
+    // Print tasks worker is currently doing
+    node *n1 = list->first;
+    int flag1 = 1;
+    if (n1 != NULL) {
+      if (strcmp(name, n1->task->person) == 0) {
+        flag1 = 0;
+        string = listPrint(list, counter, 1);
+
+        wmove(win, getcury(win) + 1, 0);
+        waddstr(win, string);
+        wmove(win, getcury(win) + 1, 0);
+        whline(win, ACS_HLINE, getmaxx(win));
+      }
+
+      while (n1->next != NULL) {
+        if (strcmp(name, n1->task->person) != 0) {
+          flag1 = 0;
+          n1 = n1->next;
+          ++counter;
+        }
+      }
+
+      if (flag1) {
+        string = "The guy's slacking.";
+        wmove(win, getcury(win) + 1, 0);
+        waddstr(win, string);
+        wmove(win, getcury(win) + 1, 0);
+        whline(win, ACS_HLINE, getmaxx(win));
+      }
+    }
+  } else {
+    string = "The guy's slacking.";
+    wmove(win, getcury(win) + 1, 0);
+    waddstr(win, string);
+    wmove(win, getcury(win) + 1, 0);
+    whline(win, ACS_HLINE, getmaxx(win));
+  }
+}

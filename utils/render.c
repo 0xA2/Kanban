@@ -27,7 +27,6 @@ static const char *choices[] = {
     "Reassign task",
     "Reopen a task",
     "Tasks by person",
-    "See all",
     "Exit",
 };
 
@@ -95,7 +94,7 @@ void driver(FORM *form, FIELD **fields) {
         form_driver(form, REQ_VALIDATION);
         return;
       } else {
-        form_driver(form, REQ_NEXT_FIELD);
+        form_driver(form, REQ_LAST_FIELD);
       }
       break;
 
@@ -104,7 +103,7 @@ void driver(FORM *form, FIELD **fields) {
         form_driver(form, REQ_VALIDATION);
         return;
       } else {
-        form_driver(form, REQ_NEXT_FIELD);
+        form_driver(form, REQ_LAST_FIELD);
       }
       break;
 
@@ -144,7 +143,7 @@ FORM *renderForm(struct field_info *options, int s) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
       set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
       set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number], TYPE_REGEXP, "[a-zA-Z0-9_]+( [a-zA-Z0-9_]+)*");
+      set_field_type(fields[options[i].number], TYPE_REGEXP, "^ *[a-zA-Z0-9 !?]{0,40} *$");
 
     } else if (strcmp(options[i].type, "input_date") == 0) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
@@ -155,6 +154,7 @@ FORM *renderForm(struct field_info *options, int s) {
                      "([0-2][0-9]|3[01])\\/(0[0-9]|1[0-2])\\/([01][0-9][0-9]|20[0-9][0-9])");
     }
   }
+
   assert(fields != NULL);
   fields[s] = NULL;
 
@@ -172,6 +172,30 @@ FORM *renderForm(struct field_info *options, int s) {
   driver(form, fields);
 
   return form;
+}
+
+void renderPerson(char* name) {
+  int h, w, bh, bw;
+  h = getmaxy(stdscr) - 5;
+  w = getmaxx(stdscr) / 3;
+
+  // Portion of screen occupied by the board
+  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
+
+  allBoard = derwin(boardWin, h, w, 0, 0);
+  box(allBoard, 0, 0);
+
+
+  bh = (getmaxy(allBoard)) - 4;
+  bw = (getmaxx(allBoard)) - 4;
+  all = derwin(todoBoard, bh, bw, 2, 2);
+
+  // Print todo
+  title(allBoard, "| DOING |");
+  printListByPerson(all, boardList->all, name);
+
+  wrefresh(allBoard);
+  wrefresh(all);
 }
 
 void renderAll() {
@@ -419,6 +443,15 @@ void personTasksChoice() {
   //addTask(priorityInt, descriptionBuffer);
 
   unpost(form, form->field);
+
+  int c;
+  wmove(menuWin, 0, 0);
+  renderPerson(personBuffer);
+  while ((c = wgetch(menuWin)) != (KEY_LEFT | KEY_RIGHT | 's' | 'q')) {
+    wrefresh(doing);
+    wrefresh(done);
+  }
+
   choiceLoop();
 }
 
@@ -440,10 +473,6 @@ void getNextMenu(int choice) {
     break;
 
   case 6:personTasksChoice();
-    break;
-
-  case 7:currentBoard *= -1;
-    choiceLoop();
     break;
 
   default: saveTasks(boardList->todo, boardList->doing, boardList->done);

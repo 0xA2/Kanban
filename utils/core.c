@@ -115,28 +115,17 @@ int reopenTask(int id) {
 }
 
 /*
-
-void tasksFromWorker() {
-
-  // Ask user for name of worker
-  printf("Tasks by name > ");
-  char *name = (char *) malloc(1024);
-  readString(name);
-
+tasklist *tasksFromWorker(char* name) {
+  tasklist *
   if (!listIsEmpty(board->doing)) {
     // Print tasks worker is currently doing
     node *n1 = board->doing->first;
     int flag1 = 1;
     if (n1 != NULL) {
-      puts("\nWorking on:");
       while (n1->next != NULL) {
         if (!strcmp(name, n1->task->person)) {
           flag1 = 0;
-          printf("\n\tID: %d | Priority: %d\n\t%s\n\tAssigned to %s",
-                 n1->task->id,
-                 n1->task->priority,
-                 n1->task->description,
-                 n1->task->person);
+
           n1 = n1->next;
         }
       }
@@ -188,4 +177,4 @@ void tasksFromWorker() {
   }
   getchar();
 }
- */
+*/
