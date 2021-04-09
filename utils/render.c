@@ -135,141 +135,6 @@ void driver(FORM *form, FIELD **fields) {
   }
 }
 
-FORM *renderForm(struct field_info *options, int s) {
-  FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
-
-  formWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
-  fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
-  box(formWin, 0, 0);
-
-  for (int i = 0; i < s; ++i) {
-    if (strcmp(options[i].type, "prompt") == 0) {
-      fields[i] = new_field(1, 25, options[i].number * 2, 0, 0, 0);
-      set_field_buffer(fields[options[i].number], 0, options[i].label);
-      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
-
-    } else if (strcmp(options[i].type, "button") == 0) {
-      fields[i] = new_field(1, 6, options[i].number * 2, 0, 0, 0);
-      set_field_buffer(fields[options[i].number], 0, options[i].label);
-      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_ACTIVE);
-
-    } else if (strcmp(options[i].type, "input_int") == 0) {
-      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
-      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-      set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number], TYPE_INTEGER, 1, 1, 1000);
-
-    } else if (strcmp(options[i].type, "input_str") == 0) {
-      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
-      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-      set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number], TYPE_REGEXP, "^ *[a-zA-Z0-9 !?]{0,30} *$");
-
-    } else if (strcmp(options[i].type, "input_date") == 0) {
-      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
-      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
-      set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number],
-                     TYPE_REGEXP,
-                     "([0-2][0-9]|3[01])\\/(0[0-9]|1[0-2])\\/([01][0-9][0-9]|20[0-9][0-9])");
-    }
-  }
-
-  assert(fields != NULL);
-  fields[s] = NULL;
-
-  FORM *form = new_form(fields);
-  assert(form != NULL);
-
-  set_form_win(form, formWin);
-  set_form_sub(form, fieldsWin);
-  post_form(form);
-
-  nuke();
-  mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
-  refresh();
-  redrawForms();
-
-  driver(form, fields);
-
-  return form;
-}
-
-void renderPerson(char* name) {
-  nuke();
-  mvprintw(0, 1, "Please press \"R\" to return.");
-  refresh();
-
-  int h, w, bh, bw;
-  h = getmaxy(stdscr) - 3;
-  w = getmaxx(stdscr) / 3;
-
-  // Portion of screen occupied by the board
-  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
-
-  // Each list box
-  todoBoard = derwin(boardWin, h, w, 0, 0);
-  doingBoard = derwin(boardWin, h, w, 0, w);
-  doneBoard = derwin(boardWin, h, w, 0, 2 * w);
-
-  box(todoBoard, 0, 0);
-  box(doingBoard, 0, 0);
-  box(doneBoard, 0, 0);
-
-  // Boxes inside the previous ones to prevent text from overflowing
-  // - Getting the height and width
-  // - Since there are 3 windows, one of them might be smaller
-  // - We have to make this check for every. single. one.
-  bh = (getmaxy(todoBoard)) - 4;
-  bw = (getmaxx(todoBoard)) - 4;
-  todo = derwin(todoBoard, bh, bw, 2, 2);
-
-  bh = (getmaxy(doingBoard)) - 4;
-  bw = (getmaxx(doingBoard)) - 4;
-  doing = derwin(doingBoard, bh, bw, 2, 2);
-
-  bh = (getmaxy(doneBoard)) - 4;
-  bw = (getmaxx(doneBoard)) - 4;
-  done = derwin(doneBoard, bh, bw, 2, 2);
-
-  // Print todo
-  title(todoBoard, "| TODO (no one assigned) |");
-  printList(todo, boardList->todo, 1);
-
-  // Print doing
-  title(doingBoard, "| DOING |");
-  printListByPerson(doing, boardList->doing, name);
-
-  // Print done
-  title(doneBoard, "| DONE |");
-  printListByPerson(done, boardList->done, name);
-
-  redrawBoards();
-}
-
-void renderAll() {
-  int h, w, bh, bw;
-  h = getmaxy(stdscr) - 5;
-  w = getmaxx(stdscr);
-
-  // Portion of screen occupied by the board
-  boardWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
-
-  allBoard = derwin(boardWin, h, w, 0, 0);
-  box(allBoard, 0, 0);
-
-
-  bh = (getmaxy(allBoard)) - 4;
-  bw = (getmaxx(allBoard)) - 4;
-  all = derwin(boardWin, bh, bw, 2, 2);
-
-  // Print all
-  title(allBoard, "| ALL |");
-  printList(all, boardList->all, 4);
-
-  redrawBoards();
-}
-
 void initBoard(int option) {
   if (option == 1) {
     renderBoard();
@@ -617,6 +482,141 @@ void choiceLoop() {
 
 /* RENDER */
 
+FORM *renderForm(struct field_info *options, int s) {
+  FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
+
+  formWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
+  fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
+  box(formWin, 0, 0);
+
+  for (int i = 0; i < s; ++i) {
+    if (strcmp(options[i].type, "prompt") == 0) {
+      fields[i] = new_field(1, 25, options[i].number * 2, 0, 0, 0);
+      set_field_buffer(fields[options[i].number], 0, options[i].label);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
+
+    } else if (strcmp(options[i].type, "button") == 0) {
+      fields[i] = new_field(1, 6, options[i].number * 2, 0, 0, 0);
+      set_field_buffer(fields[options[i].number], 0, options[i].label);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_ACTIVE);
+
+    } else if (strcmp(options[i].type, "input_int") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number], TYPE_INTEGER, 1, 1, 1000);
+
+    } else if (strcmp(options[i].type, "input_str") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number], TYPE_REGEXP, "^ *[a-zA-Z0-9 !?]{0,30} *$");
+
+    } else if (strcmp(options[i].type, "input_date") == 0) {
+      fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
+      set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+      set_field_back(fields[options[i].number], A_UNDERLINE);
+      set_field_type(fields[options[i].number],
+                     TYPE_REGEXP,
+                     "([0-2][0-9]|3[01])\\/(0[0-9]|1[0-2])\\/([01][0-9][0-9]|20[0-9][0-9])");
+    }
+  }
+
+  assert(fields != NULL);
+  fields[s] = NULL;
+
+  FORM *form = new_form(fields);
+  assert(form != NULL);
+
+  set_form_win(form, formWin);
+  set_form_sub(form, fieldsWin);
+  post_form(form);
+
+  nuke();
+  mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
+  refresh();
+  redrawForms();
+
+  driver(form, fields);
+
+  return form;
+}
+
+void renderPerson(char* name) {
+  nuke();
+  mvprintw(0, 1, "Please press \"R\" to return.");
+  refresh();
+
+  int h, w, bh, bw;
+  h = getmaxy(stdscr) - 3;
+  w = getmaxx(stdscr) / 3;
+
+  // Portion of screen occupied by the board
+  boardWin = newwin(getmaxy(stdscr) - 3, getmaxx(stdscr), 2, 0);
+
+  // Each list box
+  todoBoard = derwin(boardWin, h, w, 0, 0);
+  doingBoard = derwin(boardWin, h, w, 0, w);
+  doneBoard = derwin(boardWin, h, w, 0, 2 * w);
+
+  box(todoBoard, 0, 0);
+  box(doingBoard, 0, 0);
+  box(doneBoard, 0, 0);
+
+  // Boxes inside the previous ones to prevent text from overflowing
+  // - Getting the height and width
+  // - Since there are 3 windows, one of them might be smaller
+  // - We have to make this check for every. single. one.
+  bh = (getmaxy(todoBoard)) - 4;
+  bw = (getmaxx(todoBoard)) - 4;
+  todo = derwin(todoBoard, bh, bw, 2, 2);
+
+  bh = (getmaxy(doingBoard)) - 4;
+  bw = (getmaxx(doingBoard)) - 4;
+  doing = derwin(doingBoard, bh, bw, 2, 2);
+
+  bh = (getmaxy(doneBoard)) - 4;
+  bw = (getmaxx(doneBoard)) - 4;
+  done = derwin(doneBoard, bh, bw, 2, 2);
+
+  // Print todo
+  title(todoBoard, "| TODO (no one assigned) |");
+  printList(todo, boardList->todo, 1);
+
+  // Print doing
+  title(doingBoard, "| DOING |");
+  printListByPerson(doing, boardList->doing, name);
+
+  // Print done
+  title(doneBoard, "| DONE |");
+  printListByPerson(done, boardList->done, name);
+
+  redrawBoards();
+}
+
+void renderAll() {
+  int h, w, bh, bw;
+  h = getmaxy(stdscr) - 5;
+  w = getmaxx(stdscr);
+
+  // Portion of screen occupied by the board
+  boardWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
+
+  allBoard = derwin(boardWin, h, w, 0, 0);
+  box(allBoard, 0, 0);
+
+
+  bh = (getmaxy(allBoard)) - 4;
+  bw = (getmaxx(allBoard)) - 4;
+  all = derwin(boardWin, bh, bw, 2, 2);
+
+  // Print all
+  title(allBoard, "| ALL |");
+  printList(all, boardList->all, 4);
+
+  redrawBoards();
+}
+
 void renderMenu(int highlight) {
   wclear(menuWin);
 
@@ -709,7 +709,7 @@ void renderBoard() {
   printList(todo, boardList->todo, 1);
 
   // Print doing
-  title(doingBoard, "| DOING |");
+  title(doingBoard, "| DOING (max: 10) |");
   printList(doing, boardList->doing, 2);
 
   // Print done
