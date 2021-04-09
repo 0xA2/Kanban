@@ -36,7 +36,6 @@ static int n_choices = sizeof(choices) / sizeof(char *);
 // clears windows, refreshes screen
 // any window that was on screen needs to be refreshed afterwards
 void nuke() {
-  clear();
   clrtoeol();
   refresh();
   endwin();
@@ -45,7 +44,23 @@ void nuke() {
   clear();
   noecho();
   keypad(stdscr, TRUE);
-  refresh();
+}
+
+void redrawBoards(){
+  wrefresh(stdscr);
+  wrefresh(boardWin);
+  wrefresh(todoBoard);
+  wrefresh(doingBoard);
+  wrefresh(doneBoard);
+  wrefresh(todo);
+  wrefresh(doing);
+  wrefresh(done);
+}
+
+void redrawForms(){
+  wrefresh(stdscr);
+  wrefresh(formWin);
+  wrefresh(fieldsWin);
 }
 
 void driver(FORM *form, FIELD **fields) {
@@ -116,17 +131,15 @@ void driver(FORM *form, FIELD **fields) {
       break;
     }
 
-    wrefresh(formWin);
-    wrefresh(fieldsWin);
+    redrawForms();
   }
 }
 
 FORM *renderForm(struct field_info *options, int s) {
-  mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
-
   FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
-  formWin = derwin(boardWin, getmaxy(boardWin), getmaxx(boardWin), 0, 0);
-  fieldsWin = derwin(formWin, getmaxy(boardWin) - 2, getmaxx(boardWin) - 2, 1, 1);
+
+  formWin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr), 2, 0);
+  fieldsWin = derwin(formWin, getmaxy(formWin) - 2, getmaxx(formWin) - 2, 1, 1);
   box(formWin, 0, 0);
 
   for (int i = 0; i < s; ++i) {
@@ -172,28 +185,20 @@ FORM *renderForm(struct field_info *options, int s) {
   set_form_sub(form, fieldsWin);
   post_form(form);
 
+  nuke();
+  mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
   refresh();
-  wrefresh(formWin);
-  wrefresh(fieldsWin);
+  redrawForms();
 
   driver(form, fields);
 
   return form;
 }
 
-void refreshBoard(){
-  refresh();
-  wrefresh(boardWin);
-  wrefresh(todoBoard);
-  wrefresh(doingBoard);
-  wrefresh(doneBoard);
-  wrefresh(todo);
-  wrefresh(doing);
-  wrefresh(done);
-}
-
 void renderPerson(char* name) {
+  nuke();
   mvprintw(0, 1, "Please press \"R\" to return.");
+  refresh();
 
   int h, w, bh, bw;
   h = getmaxy(stdscr) - 3;
@@ -239,12 +244,10 @@ void renderPerson(char* name) {
   title(doneBoard, "| DONE |");
   printListByPerson(done, boardList->done, name);
 
-  refreshBoard();
-  wrefresh(stdscr);
+  redrawBoards();
 }
 
 void renderAll() {
-
   int h, w, bh, bw;
   h = getmaxy(stdscr) - 5;
   w = getmaxx(stdscr);
@@ -264,9 +267,7 @@ void renderAll() {
   title(allBoard, "| ALL |");
   printList(all, boardList->all, 4);
 
-  wrefresh(boardWin);
-  wrefresh(allBoard);
-  wrefresh(all);
+  redrawBoards();
 }
 
 void initBoard(int option) {
@@ -301,7 +302,8 @@ void addChoice() {
   FORM *form = renderForm(options, 5);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
-    addChoice();
+    unpost(form, form->field);
+    getNextMenu(1);
   }
 
   // Reading priority
@@ -334,7 +336,8 @@ void startChoice() {
   FORM *form = renderForm(options, 7);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
-    startChoice();
+    unpost(form, form->field);
+    getNextMenu(2);
   }
 
   // Reading ID
@@ -381,7 +384,8 @@ void closeChoice() {
   FORM *form = renderForm(options, 3);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
-    closeChoice();
+    unpost(form, form->field);
+    getNextMenu(3);
   }
 
   // Reading ID
@@ -392,7 +396,7 @@ void closeChoice() {
 
   if (!listTaskExists(idInt, boardList->doing)) {
     unpost(form, form->field);
-    startChoice();
+    closeChoice();
   } else {
     // Adding task to done
     closeTask(idInt);
@@ -412,7 +416,8 @@ void reAssign() {
   FORM *form = renderForm(options, 5);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
-    reAssign();
+    unpost(form, form->field);
+    getNextMenu(4);
   }
 
   // Reading ID
@@ -474,23 +479,25 @@ void personTasksChoice() {
   FORM *form = renderForm(options, 3);
 
   if (form_driver(form, REQ_VALIDATION) != 0) {
-    personTasksChoice();
+    unpost(form, form->field);
+    getNextMenu(5);
   }
 
   // Reading description
   char *personBuffer = field_buffer(form->field[1], 0);
   trimWhitespaces(personBuffer);
-  unpost(form, form->field);
 
   int c;
+
   renderPerson(personBuffer);
   while (1) {
     c = wgetch(menuWin);
-    if (c == KEY_LEFT || c == KEY_RIGHT || c == 'r')
+    if (c == KEY_LEFT || c == KEY_RIGHT || c == 'r') {
       break;
+    }
   }
 
-  nuke();
+  unpost(form, form->field);
 }
 
 void getNextMenu(int choice) {
@@ -526,12 +533,7 @@ void choiceLoop() {
   maxx = getmaxx(stdscr);
   maxy = getmaxy(stdscr);
 
-  nuke();
-
-  initBoard(currentBoard);
   renderMenu(highlight);
-  mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
-  refresh();
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
@@ -541,21 +543,21 @@ void choiceLoop() {
       maxx = getmaxx(stdscr);
       maxy = getmaxy(stdscr);
 
+      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
+      wrefresh(stdscr);
       initBoard(currentBoard);
       renderMenu(highlight);
-      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
     }
+
+    // Start render
+    mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
+    wrefresh(stdscr);
+    initBoard(currentBoard);
+    renderMenu(highlight);
 
     c = wgetch(menuWin);
 
     switch (c) {
-
-    case 'r':
-      nuke();
-      initBoard(currentBoard);
-      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
-      wrefresh(stdscr);
-      break;
 
     case 'a':
       currentBoard *= -1;
@@ -601,16 +603,10 @@ void choiceLoop() {
 
     case 10:choice = highlight;
       getNextMenu(choice);
-      nuke();
-      initBoard(currentBoard);
-      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
-      wrefresh(stdscr);
       break;
 
     default: break;
     }
-
-    renderMenu(highlight);
 
   }
 
@@ -671,6 +667,8 @@ void renderMenu(int highlight) {
 }
 
 void renderBoard() {
+  wclear(boardWin);
+
   int h, w, bh, bw;
   h = getmaxy(stdscr) - 5;
   w = getmaxx(stdscr) / 3;
@@ -718,7 +716,7 @@ void renderBoard() {
   title(doneBoard, "| DONE |");
   printList(done, boardList->done, 3);
 
-  refreshBoard();
+  redrawBoards();
 }
 
 void render(board_t *board_init) {
@@ -732,7 +730,6 @@ void render(board_t *board_init) {
   keypad(stdscr, TRUE);
 
   choiceLoop();
-  nuke();
 
   clrtoeol();
   refresh();

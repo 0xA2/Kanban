@@ -8,6 +8,7 @@ typedef struct field_info {
   int number;
 } FIELD_INFO;
 
+void getNextMenu(int);
 void addChoice();
 void startChoice();
 void closeChoice();
