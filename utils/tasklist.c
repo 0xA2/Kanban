@@ -743,11 +743,11 @@ long dateToLong(int year, int month, int day) {
 }
 
 char *printDate(long time) {
-  char *date = (char *) malloc(120 * sizeof(char));
+  char *date = (char *) malloc(16 * sizeof(char));
   time_t rawtime = time;
 
   struct tm *timeinfo = localtime(&rawtime);
-  strftime(date, 120, "%d/%m/%Y", timeinfo);
+  strftime(date, 16, "%d/%m/%Y", timeinfo);
 
   return date;
 }
@@ -758,7 +758,7 @@ char *listPrint(tasklist *l, int i, int option) {
   }
 
   node *n = l->first;
-  char *taskInfo = (char *) malloc(80 * sizeof(char));
+  char *taskInfo = (char *) malloc(120 * sizeof(char));
   int cur = 0;
 
   while (n->next != NULL) {

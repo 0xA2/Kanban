@@ -23,7 +23,7 @@ void addTask(int priority, char *description) {
   if (priority > 10)
     return;
 
-  card *toAdd = (card *) malloc(sizeof(card));
+  card *toAdd;
   int id = getCurID();
 
   if ((toAdd = cardNew(id, priority, time(NULL), description)) != NULL) {
@@ -44,7 +44,7 @@ int workOnTask(int id, int d, int m, int y, char *worker) {
     return 0;
   }
 
-  card *toMove = (card *) malloc(sizeof(card));
+  card *toMove;
 
   // Remove task from todo
   if ((toMove = listRemoveTaskByID(id, board->todo)) != NULL) {
@@ -65,7 +65,7 @@ int workOnTask(int id, int d, int m, int y, char *worker) {
 }
 
 int closeTask(int id) {
-  card *toMove = (card *) malloc(sizeof(card));
+  card *toMove;
 
   // Remove task from doing
   if ((toMove = listRemoveTaskByID(id, board->doing)) != NULL) {
@@ -84,7 +84,7 @@ int reassignTask(int id, char *worker) {
     return 0;
   }
 
-  card *toChange = (card *) malloc(sizeof(card));
+  card *toChange;
   if ((toChange = listRemoveTaskByID(id, board->doing)) != NULL) {
     cardAssign(toChange, worker);
     listAddByName(toChange, board->doing);
@@ -100,7 +100,7 @@ int reopenTask(int id) {
     return 0;
   }
 
-  card *toMove = (card *) malloc(sizeof(card));
+  card *toMove;
   // Remove task from doing
   if ((toMove = listRemoveTaskByID(id, board->done)) != NULL) {
     // Reset task
