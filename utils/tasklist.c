@@ -6,6 +6,8 @@
 #include "card.h"
 #include "tasklist.h"
 
+ #define min(X,Y) ((X) < (Y) ? (X) : (Y))
+
 node *nodeNew(card *c, node *n) {
   node *q = (node *) malloc(sizeof(node));
   q->task = c;
