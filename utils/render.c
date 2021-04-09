@@ -39,7 +39,6 @@ void nuke() {
   endwin();
   refresh();
   clear();
-  refresh();
 }
 
 void driver(FORM *form, FIELD **fields) {
@@ -116,7 +115,6 @@ void driver(FORM *form, FIELD **fields) {
 }
 
 FORM *renderForm(struct field_info *options, int s) {
-  nuke();
   mvprintw(0, 1, "Navigate with the arrow keys, you need to complete each field correctly before continuing.");
 
   FIELD **fields = (FIELD **) malloc((s + 1) * sizeof(FIELD));
@@ -188,7 +186,6 @@ void refreshBoard(){
 }
 
 void renderPerson(char* name) {
-  nuke();
   mvprintw(0, 1, "Please press \"R\" to return.");
 
   int h, w, bh, bw;
@@ -214,17 +211,14 @@ void renderPerson(char* name) {
   bh = (getmaxy(todoBoard)) - 4;
   bw = (getmaxx(todoBoard)) - 4;
   todo = derwin(todoBoard, bh, bw, 2, 2);
-  scrollok(todo, TRUE);
 
   bh = (getmaxy(doingBoard)) - 4;
   bw = (getmaxx(doingBoard)) - 4;
   doing = derwin(doingBoard, bh, bw, 2, 2);
-  scrollok(doing, TRUE);
 
   bh = (getmaxy(doneBoard)) - 4;
   bw = (getmaxx(doneBoard)) - 4;
   done = derwin(doneBoard, bh, bw, 2, 2);
-  scrollok(done, TRUE);
 
   // Print todo
   title(todoBoard, "| TODO (no one assigned) |");
@@ -239,6 +233,7 @@ void renderPerson(char* name) {
   printListByPerson(done, boardList->done, name);
 
   refreshBoard();
+  wrefresh(stdscr);
 }
 
 void renderAll() {
@@ -483,10 +478,6 @@ void personTasksChoice() {
   // Reading description
   char *personBuffer = field_buffer(form->field[1], 0);
   trimWhitespaces(personBuffer);
-
-  // Adding task to list
-  //addTask(priorityInt, descriptionBuffer);
-
   unpost(form, form->field);
 
   int c;
@@ -497,6 +488,7 @@ void personTasksChoice() {
       break;
   }
 
+  nuke();
   choiceLoop();
 }
 
@@ -533,8 +525,6 @@ void choiceLoop() {
   maxx = getmaxx(stdscr);
   maxy = getmaxy(stdscr);
 
-  nuke();
-
   initBoard(currentBoard);
   renderMenu(highlight);
 
@@ -544,7 +534,6 @@ void choiceLoop() {
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
-
     if (is_term_resized(maxy, maxx)) {
       nuke();
 
@@ -619,6 +608,8 @@ void choiceLoop() {
 /* RENDER */
 
 void renderMenu(int highlight) {
+  wclear(menuWin);
+
   int x, y, i, pad;
 
   // Upper left corner of menu
