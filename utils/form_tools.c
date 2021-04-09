@@ -135,7 +135,8 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
 
     if (n1 != NULL) {
 
-      if (strcmp(name, n1->task->person) == 0) {
+      // list has one elements
+      if (strcmp(name, n1->task->person) == 0 && n1->next == NULL) {
         flag1 = 0;
         string = listPrint(list, counter, 1);
 
@@ -143,14 +144,37 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
         waddstr(win, string);
         wmove(win, getcury(win) + 1, 0);
         whline(win, ACS_HLINE, getmaxx(win));
+        return;
       }
 
+      // list has more than one element
       while (n1->next != NULL) {
         if (strcmp(name, n1->task->person) != 0) {
           flag1 = 0;
           n1 = n1->next;
-          ++counter;
+          counter++;
         }
+        else{
+          string = listPrint(list, counter, 1);
+
+          wmove(win, getcury(win) + 1, 0);
+          waddstr(win, string);
+          wmove(win, getcury(win) + 1, 0);
+          whline(win, ACS_HLINE, getmaxx(win));
+          n1 = n1->next;
+          counter++;
+        }
+
+      }
+
+      // Check for last element
+      if (strcmp(name, n1->task->person) == 0){
+          string = listPrint(list, counter, 1);
+
+          wmove(win, getcury(win) + 1, 0);
+          waddstr(win, string);
+          wmove(win, getcury(win) + 1, 0);
+          whline(win, ACS_HLINE, getmaxx(win));
       }
 
       if (flag1) {
@@ -170,3 +194,4 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
     whline(win, ACS_HLINE, getmaxx(win));
   }
 }
+
