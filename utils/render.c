@@ -36,9 +36,16 @@ static int n_choices = sizeof(choices) / sizeof(char *);
 // clears windows, refreshes screen
 // any window that was on screen needs to be refreshed afterwards
 void nuke() {
-  endwin();
-  refresh();
   clear();
+  clrtoeol();
+  refresh();
+  endwin();
+
+  initscr();
+  clear();
+  noecho();
+  keypad(stdscr, TRUE);
+  refresh();
 }
 
 void driver(FORM *form, FIELD **fields) {
@@ -143,7 +150,7 @@ FORM *renderForm(struct field_info *options, int s) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
       set_field_opts(fields[options[i].number], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
       set_field_back(fields[options[i].number], A_UNDERLINE);
-      set_field_type(fields[options[i].number], TYPE_REGEXP, "^ *[a-zA-Z0-9 !?]{0,40} *$");
+      set_field_type(fields[options[i].number], TYPE_REGEXP, "^ *[a-zA-Z0-9 !?]{0,30} *$");
 
     } else if (strcmp(options[i].type, "input_date") == 0) {
       fields[i] = new_field(1, 40, options[i].number * 2, 0, 0, 0);
@@ -525,12 +532,11 @@ void choiceLoop() {
   maxx = getmaxx(stdscr);
   maxy = getmaxy(stdscr);
 
+  nuke();
+
   initBoard(currentBoard);
   renderMenu(highlight);
-
   mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
-
-  refresh();
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
@@ -543,7 +549,6 @@ void choiceLoop() {
       initBoard(currentBoard);
       renderMenu(highlight);
       mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
-      wrefresh(stdscr);
     }
 
     c = wgetch(menuWin);
