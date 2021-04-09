@@ -318,7 +318,6 @@ void addChoice() {
   addTask(priorityInt, descriptionBuffer);
 
   unpost(form, form->field);
-  choiceLoop();
 }
 
 void startChoice() {
@@ -369,7 +368,6 @@ void startChoice() {
     // Adding task to list
     workOnTask(idInt, day, month - 1, year, personBuffer);
     unpost(form, form->field);
-    choiceLoop();
   }
 }
 
@@ -399,7 +397,6 @@ void closeChoice() {
     // Adding task to done
     closeTask(idInt);
     unpost(form, form->field);
-    choiceLoop();
   }
 }
 
@@ -435,7 +432,6 @@ void reAssign() {
     // Reassign task
     reassignTask(idInt, personBuffer);
     unpost(form, form->field);
-    choiceLoop();
   }
 }
 
@@ -465,7 +461,6 @@ void reOpen() {
     // Reopen task
     reopenTask(idInt);
     unpost(form, form->field);
-    choiceLoop();
   }
 }
 
@@ -496,7 +491,6 @@ void personTasksChoice() {
   }
 
   nuke();
-  choiceLoop();
 }
 
 void getNextMenu(int choice) {
@@ -536,7 +530,8 @@ void choiceLoop() {
 
   initBoard(currentBoard);
   renderMenu(highlight);
-  mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
+  mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
+  refresh();
 
   // Press right highlight and select next option, left is the opposite
   while (1) {
@@ -548,7 +543,7 @@ void choiceLoop() {
 
       initBoard(currentBoard);
       renderMenu(highlight);
-      mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
+      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
     }
 
     c = wgetch(menuWin);
@@ -558,20 +553,33 @@ void choiceLoop() {
     case 'r':
       nuke();
       initBoard(currentBoard);
-      mvprintw(0, 1, "[F1: Save] [F2: Save/Quit] Use arrows to select option, \"s\" to switch board view.");
+      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
       wrefresh(stdscr);
       break;
 
-    case 's':
+    case 'a':
       currentBoard *= -1;
       initBoard(currentBoard);
       break;
 
-    case KEY_F(1):
+    case 'A':
+      currentBoard *= -1;
+      initBoard(currentBoard);
+      break;  
+
+    case 's':
       saveTasks(boardList->todo, boardList->doing, boardList->done);
       break;
 
-    case KEY_F(2):
+    case 'S':
+      saveTasks(boardList->todo, boardList->doing, boardList->done);
+      break;
+
+    case 'q':
+      saveTasks(boardList->todo, boardList->doing, boardList->done);
+      return;
+
+    case 'Q':
       saveTasks(boardList->todo, boardList->doing, boardList->done);
       return;
 
@@ -592,6 +600,11 @@ void choiceLoop() {
       break;
 
     case 10:choice = highlight;
+      getNextMenu(choice);
+      nuke();
+      initBoard(currentBoard);
+      mvprintw(0, 1, "['S': Save] ['Q': Save/Quit] Use arrows to select an option, \"A\" to view all tasks.");
+      wrefresh(stdscr);
       break;
 
     default: break;
@@ -599,14 +612,10 @@ void choiceLoop() {
 
     renderMenu(highlight);
 
-    /* User did a choice come out of the infinite loop */
-    if (choice != 0) {
-      break;
-    }
   }
 
-  getNextMenu(choice);
 }
+
 
 //////////////////////////////////////////////////////
 
