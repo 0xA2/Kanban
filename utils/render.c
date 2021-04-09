@@ -263,7 +263,7 @@ void renderAll() {
   bw = (getmaxx(allBoard)) - 4;
   all = derwin(boardWin, bh, bw, 2, 2);
 
-  // Print todo
+  // Print all
   title(allBoard, "| ALL |");
   printList(all, boardList->all, 4);
 
