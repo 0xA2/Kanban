@@ -357,11 +357,22 @@ void startChoice() {
 
   if (!(e1 || e2 || e3) || isValidDate(year, month, day) != TRUE || !listTaskExists(idInt, boardList->todo)) {
     unpost(form, form->field);
+    free(idBuffer);
+    free(deadlineBuffer);
+    free(personBuffer);
+    free(dayBuffer);
+    free(monthBuffer);
+    free(yearBuffer);
+
     startChoice();
   } else {
-    unpost(form, form->field);
     // Adding task to list
     workOnTask(idInt, day, month - 1, year, personBuffer);
+
+    unpost(form, form->field);
+    free(idBuffer);
+    free(deadlineBuffer);
+    free(personBuffer);
     choiceLoop();
   }
 }
@@ -387,11 +398,13 @@ void closeChoice() {
 
   if (!listTaskExists(idInt, boardList->doing)) {
     unpost(form, form->field);
+    free(idBuffer);
     startChoice();
   } else {
     // Adding task to done
     closeTask(idInt);
     unpost(form, form->field);
+    free(idBuffer);
     choiceLoop();
   }
 }
@@ -423,11 +436,15 @@ void reAssign() {
 
   if (!listTaskExists(idInt, boardList->doing)) {
     unpost(form, form->field);
+    free(idBuffer);
+    free(personBuffer);
     reAssign();
   } else {
     // Reassign task
     reassignTask(idInt, personBuffer);
     unpost(form, form->field);
+    free(idBuffer);
+    free(personBuffer);
     choiceLoop();
   }
 }
@@ -489,6 +506,7 @@ void personTasksChoice() {
   }
 
   nuke();
+  free(personBuffer);
   choiceLoop();
 }
 
