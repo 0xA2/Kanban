@@ -122,7 +122,7 @@ void printList(WINDOW *win, tasklist *list, int option) {
   }
 }
 
-void printListByPerson(WINDOW *win, tasklist *list, char* name) {
+void printListByPerson(WINDOW *win, tasklist *list, char *name) {
   char *string;
   wmove(win, 0, 0);
 
@@ -153,8 +153,7 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
           flag1 = 0;
           n1 = n1->next;
           counter++;
-        }
-        else{
+        } else {
           string = listPrint(list, counter, 1);
 
           wmove(win, getcury(win) + 1, 0);
@@ -168,13 +167,13 @@ void printListByPerson(WINDOW *win, tasklist *list, char* name) {
       }
 
       // Check for last element
-      if (strcmp(name, n1->task->person) == 0){
-          string = listPrint(list, counter, 1);
+      if (strcmp(name, n1->task->person) == 0) {
+        string = listPrint(list, counter, 1);
 
-          wmove(win, getcury(win) + 1, 0);
-          waddstr(win, string);
-          wmove(win, getcury(win) + 1, 0);
-          whline(win, ACS_HLINE, getmaxx(win));
+        wmove(win, getcury(win) + 1, 0);
+        waddstr(win, string);
+        wmove(win, getcury(win) + 1, 0);
+        whline(win, ACS_HLINE, getmaxx(win));
       }
 
       if (flag1) {

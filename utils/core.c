@@ -93,7 +93,6 @@ int reassignTask(int id, char *worker) {
   return 0;
 }
 
-
 int reopenTask(int id) {
   // Chech if task exists in done
   if (!listGetTaskByID(id, board->done)) {

@@ -46,7 +46,7 @@ void nuke() {
   keypad(stdscr, TRUE);
 }
 
-void redrawBoards(){
+void redrawBoards() {
   wrefresh(stdscr);
   wrefresh(boardWin);
   wrefresh(todoBoard);
@@ -57,7 +57,7 @@ void redrawBoards(){
   wrefresh(done);
 }
 
-void redrawForms(){
+void redrawForms() {
   wrefresh(stdscr);
   wrefresh(formWin);
   wrefresh(fieldsWin);
@@ -89,17 +89,15 @@ void driver(FORM *form, FIELD **fields) {
     case KEY_RIGHT:form_driver(form, REQ_NEXT_CHAR);
       break;
 
-    case KEY_DOWN:
-      form_driver(form, REQ_NEXT_FIELD);
+    case KEY_DOWN:form_driver(form, REQ_NEXT_FIELD);
       form_driver(form, REQ_END_LINE);
       break;
 
-    case KEY_UP:
-      form_driver(form, REQ_PREV_FIELD);
+    case KEY_UP:form_driver(form, REQ_PREV_FIELD);
       form_driver(form, REQ_END_LINE);
       break;
 
-    // depending on the terminal emulator, the key code provided might be different
+      // depending on the terminal emulator, the key code provided might be different
     case KEY_BACKSPACE:form_driver(form, REQ_DEL_PREV);
       break;
 
@@ -424,30 +422,24 @@ void choiceLoop() {
 
     switch (c) {
 
-    case 'a':
-      currentBoard *= -1;
+    case 'a':currentBoard *= -1;
       initBoard(currentBoard);
       break;
 
-    case 'A':
-      currentBoard *= -1;
+    case 'A':currentBoard *= -1;
       initBoard(currentBoard);
-      break;  
-
-    case 's':
-      saveTasks(boardList->todo, boardList->doing, boardList->done);
       break;
 
-    case 'S':
-      saveTasks(boardList->todo, boardList->doing, boardList->done);
+    case 's':saveTasks(boardList->todo, boardList->doing, boardList->done);
       break;
 
-    case 'q':
-      saveTasks(boardList->todo, boardList->doing, boardList->done);
+    case 'S':saveTasks(boardList->todo, boardList->doing, boardList->done);
+      break;
+
+    case 'q':saveTasks(boardList->todo, boardList->doing, boardList->done);
       return;
 
-    case 'Q':
-      saveTasks(boardList->todo, boardList->doing, boardList->done);
+    case 'Q':saveTasks(boardList->todo, boardList->doing, boardList->done);
       return;
 
     case KEY_LEFT:
@@ -542,7 +534,7 @@ FORM *renderForm(struct field_info *options, int s) {
   return form;
 }
 
-void renderPerson(char* name) {
+void renderPerson(char *name) {
   nuke();
   mvprintw(0, 1, "Please press \"R\" to return.");
   refresh();
@@ -604,7 +596,6 @@ void renderAll() {
 
   allBoard = derwin(boardWin, h, w, 0, 0);
   box(allBoard, 0, 0);
-
 
   bh = (getmaxy(allBoard)) - 4;
   bw = (getmaxx(allBoard)) - 4;

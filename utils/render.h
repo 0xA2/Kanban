@@ -11,7 +11,7 @@ typedef struct field_info {
 void nuke();
 void redrawBoards();
 void redrawForms();
-void driver(FORM*, FIELD**);
+void driver(FORM *, FIELD **);
 
 void getNextMenu(int);
 void addChoice();
@@ -21,8 +21,8 @@ void choiceLoop();
 void reAssign();
 void reopen();
 
-FORM *renderForm(struct field_info*, int);
-void renderPerson(char*);
+FORM *renderForm(struct field_info *, int);
+void renderPerson(char *);
 void renderAll();
 void renderMenu(int);
 void renderBoard();

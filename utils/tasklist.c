@@ -6,7 +6,7 @@
 #include "card.h"
 #include "tasklist.h"
 
- #define min(X,Y) ((X) < (Y) ? (X) : (Y))
+#define min(X, Y) ((X) < (Y) ? (X) : (Y))
 
 node *nodeNew(card *c, node *n) {
   node *q = (node *) malloc(sizeof(node));
@@ -270,12 +270,12 @@ void listAddByName(card *c, tasklist *l) {
   }
 
   // List with one task
-  if (strncmp(c->person, listGetFirst(l)->person, min(strlen(c->person),strlen(listGetFirst(l)->person))) <= 0) {
+  if (strncmp(c->person, listGetFirst(l)->person, min(strlen(c->person), strlen(listGetFirst(l)->person))) <= 0) {
     listAddFirst(c, l);
     return;
   }
 
-  if (strncmp(c->person, listGetLast(l)->person, min(strlen(c->person),strlen(listGetLast(l)->person))) > 0) {
+  if (strncmp(c->person, listGetLast(l)->person, min(strlen(c->person), strlen(listGetLast(l)->person))) > 0) {
     listAddLast(c, l);
     return;
   }
@@ -284,11 +284,11 @@ void listAddByName(card *c, tasklist *l) {
   node *cur = l->first;
   node *after = l->first->next;
   while (after->next != NULL) {
-    if (strncmp(c->person, after->task->person, min(strlen(c->person),strlen(after->task->person))) > 0) {
+    if (strncmp(c->person, after->task->person, min(strlen(c->person), strlen(after->task->person))) > 0) {
       cur = after;
       after = after->next;
     }
-    if (strncmp(c->person, after->task->person, min(strlen(c->person),strlen(after->task->person))) <= 0) {
+    if (strncmp(c->person, after->task->person, min(strlen(c->person), strlen(after->task->person))) <= 0) {
       cur->next = newNode;
       newNode->next = after;
       l->size++;
@@ -297,7 +297,7 @@ void listAddByName(card *c, tasklist *l) {
   }
 
   // Check of node should be added before last
-  if (strncmp(c->person, after->task->person, min(strlen(c->person),strlen(after->task->person))) <= 0) {
+  if (strncmp(c->person, after->task->person, min(strlen(c->person), strlen(after->task->person))) <= 0) {
     cur->next = newNode;
     newNode->next = after;
     l->size++;
