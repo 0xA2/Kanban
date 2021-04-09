@@ -92,7 +92,7 @@ void driver(FORM *form, FIELD **fields) {
         form_driver(form, REQ_VALIDATION);
         return;
       } else {
-        form_driver(form, REQ_LAST_FIELD);
+        form_driver(form, REQ_NEXT_FIELD);
       }
       break;
 
@@ -101,7 +101,7 @@ void driver(FORM *form, FIELD **fields) {
         form_driver(form, REQ_VALIDATION);
         return;
       } else {
-        form_driver(form, REQ_LAST_FIELD);
+        form_driver(form, REQ_NEXT_FIELD);
       }
       break;
 
